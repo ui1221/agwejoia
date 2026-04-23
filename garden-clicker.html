@@ -45,7 +45,12 @@
     50%      { transform: rotate(5deg)  translateY(-5px); }
   }
 
-  .wrapper { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 8px 12px 160px; }
+  .wrapper {
+    position: relative; z-index: 1; max-width: 520px; margin: 0 auto;
+    padding: 8px 12px 16px;
+    min-height: calc(100vh - 110px);
+    display: flex; flex-direction: column;
+  }
 
   /* 種カウンター */
   .seed-bar {
@@ -54,12 +59,12 @@
     display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
   }
   .seed-count { font-size: 2rem; font-weight: 900; color: var(--soil2); line-height: 1.1; }
-  .seed-sub   { font-size: 0.78rem; font-weight: 700; color: var(--green); margin-top: 1px; min-height: 1em; }
-  .seed-label { font-size: 0.75rem; color: #795548; margin-top: 1px; }
-  .per-sec    { font-size: 0.75rem; color: var(--green); font-weight: 700; background: #e8f5e9; border-radius: 30px; padding: 4px 12px; text-align: right; }
+  .seed-sub   { font-size: 0.92rem; font-weight: 700; color: var(--green); margin-top: 1px; min-height: 1em; }
+  .seed-label { font-size: 0.88rem; color: #795548; margin-top: 1px; }
+  .per-sec    { font-size: 0.9rem; color: var(--green); font-weight: 700; background: #e8f5e9; border-radius: 30px; padding: 4px 12px; text-align: right; }
 
   /* 転生ステータス（種カウンター右下に小さく） */
-  .prestige-inline { font-size: 0.7rem; font-weight: 700; color: #ffd700; margin-top: 3px; min-height: 1em; text-shadow: 0 1px 2px rgba(0,0,0,0.18); }
+  .prestige-inline { font-size: 0.82rem; font-weight: 700; color: #ffd700; margin-top: 3px; min-height: 1em; text-shadow: 0 1px 2px rgba(0,0,0,0.18); }
   .prestige-inline.hidden { display: none; }
 
   /* 転生ボタンカード */
@@ -67,15 +72,15 @@
     background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
     border-radius: var(--radius); padding: 14px 18px;
     color: white; text-align: center; cursor: pointer;
-    margin-bottom: 14px; border: 2px solid #ffd700;
+    margin-top: 12px; border: 2px solid #ffd700;
     box-shadow: 0 0 20px rgba(255,215,0,0.25);
     animation: starPulse 3s ease-in-out infinite;
     touch-action: manipulation; -webkit-tap-highlight-color: transparent;
   }
   .prestige-card.hidden { display: none; }
-  .prestige-card-title { font-size: 1rem; font-weight: 900; margin-bottom: 4px; }
-  .prestige-card-desc  { font-size: 0.75rem; opacity: 0.85; }
-  .prestige-gain { color: #ffd700; font-weight: 900; font-size: 0.85rem; margin-top: 6px; }
+  .prestige-card-title { font-size: 1.05rem; font-weight: 900; margin-bottom: 4px; }
+  .prestige-card-desc  { font-size: 0.88rem; opacity: 0.85; }
+  .prestige-gain { color: #ffd700; font-weight: 900; font-size: 0.95rem; margin-top: 6px; }
   @keyframes starPulse {
     0%,100% { box-shadow: 0 0 16px rgba(255,215,0,0.2); }
     50%      { box-shadow: 0 0 30px rgba(255,215,0,0.5); }
@@ -93,19 +98,19 @@
     padding: 28px 24px; color: white; text-align: center; max-width: 340px; width: 100%;
   }
   .prestige-modal h2 { font-size: 1.2rem; font-weight: 900; margin-bottom: 12px; }
-  .prestige-modal p  { font-size: 0.85rem; line-height: 1.7; margin-bottom: 16px; opacity: 0.9; }
-  .prestige-modal .gain-text { color: #ffd700; font-size: 1rem; font-weight: 900; margin-bottom: 20px; }
+  .prestige-modal p  { font-size: 0.95rem; line-height: 1.7; margin-bottom: 16px; opacity: 0.9; }
+  .prestige-modal .gain-text { color: #ffd700; font-size: 1.05rem; font-weight: 900; margin-bottom: 20px; }
   .modal-btn {
     display: block; width: 100%; padding: 12px;
     border-radius: 14px; border: none; font-family: inherit;
-    font-size: 0.9rem; font-weight: 900; cursor: pointer;
+    font-size: 1rem; font-weight: 900; cursor: pointer;
     touch-action: manipulation; margin-bottom: 10px;
   }
   .modal-btn.confirm { background: linear-gradient(135deg, #ffd700, #ffb300); color: #1a1a2e; }
   .modal-btn.cancel  { background: rgba(255,255,255,0.15); color: white; }
 
   /* タップボタン */
-  .tap-area { display: flex; justify-content: center; margin-bottom: 18px; }
+  .tap-area { flex: 1; display: flex; justify-content: center; align-items: center; }
   .tap-btn {
     background: none; border: none; cursor: pointer;
     font-size: 5.5rem; line-height: 1;
@@ -116,8 +121,8 @@
   }
   .tap-btn:active { transform: scale(0.88); filter: drop-shadow(0 2px 4px rgba(80,40,20,0.10)); }
   .tap-btn .tap-hint {
-    position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%);
-    font-size: 0.75rem; color: #a1887f; white-space: nowrap; font-weight: 700;
+    position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
+    font-size: 0.9rem; color: #a1887f; white-space: nowrap; font-weight: 700;
   }
 
   /* フロートテキスト */
@@ -134,10 +139,10 @@
     cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   }
   .bottom-bar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .bottom-bar-label  { font-size: 0.8rem; font-weight: 700; color: #795548; display: flex; align-items: center; gap: 6px; }
-  .new-badge { background: var(--accent); color: white; font-size: 0.65rem; font-weight: 900; border-radius: 20px; padding: 1px 7px; animation: pulse 1.6s ease-in-out infinite; }
+  .bottom-bar-label  { font-size: 0.95rem; font-weight: 700; color: #795548; display: flex; align-items: center; gap: 6px; }
+  .new-badge { background: var(--accent); color: white; font-size: 0.78rem; font-weight: 900; border-radius: 20px; padding: 1px 8px; animation: pulse 1.6s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-  .bottom-bar-arrow { font-size: 0.85rem; color: #a1887f; transition: transform 0.3s; }
+  .bottom-bar-arrow { font-size: 1rem; color: #a1887f; transition: transform 0.3s; }
   .bottom-bar-arrow.open { transform: rotate(180deg); }
 
   .icon-strip { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -146,8 +151,8 @@
     gap: 1px; min-width: 44px; position: relative;
     touch-action: manipulation; cursor: pointer;
   }
-  .icon-chip .chip-icon  { font-size: 1.8rem; line-height: 1.2; }
-  .icon-chip .chip-count { font-size: 0.6rem; font-weight: 700; color: #795548; background: #f5f5f5; border-radius: 10px; padding: 0 5px; min-width: 24px; text-align: center; }
+  .icon-chip .chip-icon  { font-size: 2.2rem; line-height: 1.2; }
+  .icon-chip .chip-count { font-size: 0.76rem; font-weight: 700; color: #795548; background: #f5f5f5; border-radius: 10px; padding: 0 6px; min-width: 26px; text-align: center; }
   .icon-chip.empty .chip-icon  { opacity: 0.25; filter: grayscale(1); }
   .icon-chip.empty .chip-count { color: #bbb; background: none; }
   .icon-chip.maxed .chip-icon  { opacity: 0.4; }
@@ -158,7 +163,7 @@
   @keyframes smallBounce { 0%,70%,100% { transform: translateY(0); } 80% { transform: translateY(-6px); } 90% { transform: translateY(-2px); } }
   .icon-chip.newly-unlocked .chip-icon { opacity: 1; filter: none; animation: newGlow 2.4s ease-in-out infinite; }
   @keyframes newGlow { 0%,100% { filter: drop-shadow(0 0 2px gold); } 50% { filter: drop-shadow(0 0 8px gold) brightness(1.25); } }
-  .icon-chip.newly-unlocked::after { content: '！'; position: absolute; top: -4px; right: -2px; background: var(--accent); color: white; font-size: 0.6rem; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse 1.6s ease-in-out infinite; }
+  .icon-chip.newly-unlocked::after { content: '！'; position: absolute; top: -4px; right: -2px; background: var(--accent); color: white; font-size: 0.72rem; font-weight: 900; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse 1.6s ease-in-out infinite; }
 
   /* ========== ボトムシート ========== */
   .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
@@ -166,7 +171,7 @@
   .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: #fffdf9; border-radius: 28px 28px 0 0; box-shadow: 0 -8px 40px rgba(80,40,20,0.18); transform: translateY(100%); transition: transform 0.38s cubic-bezier(.32,1.2,.5,1); max-height: 80vh; display: flex; flex-direction: column; }
   .sheet.show { transform: translateY(0); }
   .sheet-handle { width: 40px; height: 5px; background: #d7c4bb; border-radius: 3px; margin: 12px auto 0; flex-shrink: 0; }
-  .sheet-title  { font-size: 0.9rem; font-weight: 900; color: var(--soil2); text-align: center; padding: 10px 0 12px; flex-shrink: 0; }
+  .sheet-title  { font-size: 1.05rem; font-weight: 900; color: var(--soil2); text-align: center; padding: 10px 0 12px; flex-shrink: 0; }
   .sheet-scroll { overflow-y: auto; padding: 0 14px 24px; -webkit-overflow-scrolling: touch; }
 
   .plots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -188,7 +193,7 @@
   .upgrade-badge {
     position: absolute; top: 5px; right: 5px;
     background: linear-gradient(135deg, #ffe082, #ffd54f);
-    color: #e65100; font-size: 0.62rem; font-weight: 900;
+    color: #e65100; font-size: 0.73rem; font-weight: 900;
     border-radius: 50%; width: 22px; height: 22px;
     display: flex; align-items: center; justify-content: center;
     animation: pulse 1.6s ease-in-out infinite;
@@ -198,13 +203,13 @@
   .upgrade-badge.cannot-afford { background: #e0e0e0; color: #9e9e9e; animation: none; box-shadow: none; }
 
   .plot-icon    { font-size: 2rem; line-height: 1.2; }
-  .plot-name    { font-size: 0.85rem; font-weight: 700; color: var(--soil2); }
-  .plot-rate    { font-size: 0.7rem; color: var(--green); font-weight: 700; }
-  .plot-cost    { font-size: 0.76rem; font-weight: 700; color: var(--accent); background: #fce4ec; border-radius: 20px; padding: 2px 10px; margin-top: 2px; }
+  .plot-name    { font-size: 0.95rem; font-weight: 700; color: var(--soil2); }
+  .plot-rate    { font-size: 0.85rem; color: var(--green); font-weight: 700; }
+  .plot-cost    { font-size: 0.88rem; font-weight: 700; color: var(--accent); background: #fce4ec; border-radius: 20px; padding: 2px 12px; margin-top: 2px; }
   .plot-cost.disabled    { color: #aaa; background: #f0f0f0; }
   .plot-cost.maxed-label { color: #9e9e9e; background: #eeeeee; }
-  .plot-owned    { font-size: 0.68rem; color: #795548; font-weight: 700; }
-  .plot-upgrade  { font-size: 0.65rem; color: #ff8f00; font-weight: 700; }
+  .plot-owned    { font-size: 0.82rem; color: #795548; font-weight: 700; }
+  .plot-upgrade  { font-size: 0.8rem; color: #ff8f00; font-weight: 700; }
 
   /* きらきらたね */
   .golden-seed {
@@ -219,7 +224,7 @@
   }
 
   /* ひとこと */
-  .flavor-text { font-size: 0.72rem; color: #a1887f; margin-top: 2px; min-height: 1.1em; font-style: italic; }
+  .flavor-text { font-size: 0.85rem; color: #a1887f; margin-top: 2px; min-height: 1.1em; font-style: italic; }
 
   @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
@@ -363,11 +368,23 @@ function applyStage(idx) {
 
 // ===== はたけビュー =====
 const GARDEN_ZONE = {
-  pot: 0.78, flower: 0.72, veggie: 0.83, tree: 0.62,
-  garden: 0.66, pond: 0.74, neighbor: 0.55, honey: 0.44,
-  mountain: 0.38, rainbow: 0.24, sunflower: 0.80, mushroom: 0.68,
-  rice: 0.86, cloud: 0.14, planet: 0.08, earth: 0.04
+  // 地面付近（下60〜85%）
+  pot: 0.72,  veggie: 0.80, sunflower: 0.76, rice: 0.84,
+  // 中低（45〜65%）
+  flower: 0.60, pond: 0.65,  mushroom: 0.50, garden: 0.55,
+  // 中（30〜45%）
+  tree: 0.42,  neighbor: 0.35,
+  // 中高（15〜30%）
+  honey: 0.28, mountain: 0.22,
+  // 空（0〜15%）
+  rainbow: 0.18, cloud: 0.12, planet: 0.07, earth: 0.03
 };
+// 一貫したx位置のための簡易ハッシュ
+function seedHash(str, salt) {
+  let h = salt * 0x9e3779b9;
+  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 0x517cc1b7);
+  return Math.abs(h);
+}
 let gardenIconEls = [];
 
 function renderGardenLayer() {
@@ -400,11 +417,14 @@ function renderGardenLayer() {
       const el = document.createElement('span');
       el.className = 'garden-icon';
       el.textContent = plot.icon;
-      const xPct = (i + 1) / (count + 1) * 100;
+      // ハッシュで一貫したx・サイズ（購入のたびにバラバラにならないよう）
+      const hx    = seedHash(plot.id, i * 7 + 1);
+      const hsize = seedHash(plot.id, i * 7 + 2);
+      const xPct  = 4 + (hx % 88);           // 4〜92%
+      const scale = 0.85 + (hsize % 60) / 100; // 0.85〜1.45
       el.style.left = `${xPct}%`;
       el.style.top  = `${yPx}px`;
       el.style.animationDelay = `${(i * 0.7).toFixed(1)}s`;
-      const scale = 0.9 + Math.random() * 0.6;
       el.style.fontSize = `${(scale * 2).toFixed(1)}rem`;
       layer.appendChild(el);
       gardenIconEls.push({ el, plotId: plot.id });
