@@ -66,27 +66,22 @@
   .seed-label { font-size: 0.88rem; color: #795548; margin-top: 1px; }
   .per-sec    { font-size: 0.9rem; color: var(--green); font-weight: 700; background: #e8f5e9; border-radius: 30px; padding: 4px 12px; text-align: right; }
 
-  /* 転生ステータス（種カウンター右下に小さく） */
-  .prestige-inline { font-size: 0.82rem; font-weight: 700; color: #ffd700; margin-top: 3px; min-height: 1em; text-shadow: 0 1px 2px rgba(0,0,0,0.18); }
-  .prestige-inline.hidden { display: none; }
-
-  /* 転生バッジ（左下固定・小さめ） */
-  .prestige-badge {
-    position: fixed; bottom: calc(116px + env(safe-area-inset-bottom)); left: 14px; z-index: 190;
-    background: linear-gradient(135deg, #ffd700, #ffb300);
-    color: #1a1a2e; border-radius: 30px; padding: 8px 14px;
-    font-size: 0.88rem; font-weight: 900;
+  /* ほしのたねピル（種カウンター内） */
+  .star-pill {
+    background: rgba(255,235,59,0.15);
+    border: 1.5px solid rgba(255,200,0,0.35);
+    border-radius: 20px; padding: 4px 13px;
+    font-size: 0.92rem; font-weight: 900; color: #bf6a00;
     cursor: pointer; touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    box-shadow: 0 3px 14px rgba(255,200,0,0.45);
-    animation: badgePulse 3s ease-in-out infinite;
-    display: flex; align-items: center; gap: 5px;
+    white-space: nowrap;
   }
-  .prestige-badge.hidden { display: none; }
-  @keyframes badgePulse {
-    0%,100% { box-shadow: 0 3px 10px rgba(255,200,0,0.3); }
-    50%      { box-shadow: 0 3px 20px rgba(255,200,0,0.65); }
+  .star-pill.can-prestige { animation: starGlow 2.6s ease-in-out infinite; }
+  @keyframes starGlow {
+    0%,100% { box-shadow: 0 0 3px rgba(255,200,0,0.2); border-color: rgba(255,200,0,0.4); }
+    50%      { box-shadow: 0 0 12px rgba(255,200,0,0.65); border-color: rgba(255,200,0,0.85); background: rgba(255,235,59,0.28); }
   }
+  .star-pill.hidden { display: none; }
 
   /* 転生確認モーダル */
   .prestige-overlay {
@@ -289,16 +284,15 @@
 
 <div class="wrapper">
 
-  <!-- 種カウンター（転生ステータスを右下に統合） -->
-  <div class="seed-bar">
+  <!-- 種カウンター -->
+  <div class="seed-bar" style="flex-direction:column;align-items:stretch;gap:6px;">
     <div>
       <div class="seed-count" id="seedCount">🌱 0</div>
       <div class="seed-sub"   id="seedSub"></div>
-      <div class="seed-label">たね</div>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <div class="per-sec" id="perSec">+0 / びょう</div>
-      <div class="prestige-inline hidden" id="starDisplay"></div>
+      <div class="star-pill hidden" id="starDisplay" onclick="openPrestigeModal()">🌟 ×0</div>
     </div>
   </div>
 
@@ -317,20 +311,15 @@
 
 </div>
 
-<!-- 転生確認モーダル -->
+<!-- ほしのたねモーダル -->
 <div class="prestige-overlay hidden" id="prestigeOverlay">
   <div class="prestige-modal">
-    <h2>✨ てんせいする？</h2>
-    <p>種と施設・強化はリセットされるけど、<br>これまで育てた分だけ強くなって<br>最初から始められるよ！<br><br>強くなった分は次の冒険でずっと続くよ。</p>
+    <h2>🌟 ほしのたねをあつめる</h2>
+    <p>たくさんのたねをかき集めると、<br>ほしのたねが生まれるよ！<br><br>種と施設・強化はリセットされるけど、<br>ほしのたねがあるかぎり、ずっとつよいまま。</p>
     <div class="prestige-gain" id="prestigeGain2"></div>
-    <button class="modal-btn confirm" onclick="doPrestige()">てんせいする！ ✨</button>
+    <button class="modal-btn confirm" onclick="doPrestige()">あつめる！ 🌟</button>
     <button class="modal-btn cancel"  onclick="closePrestigeModal()">まだつづける</button>
   </div>
-</div>
-
-<!-- 転生バッジ（左下固定） -->
-<div class="prestige-badge hidden" id="prestigeBadge" onclick="openPrestigeModal()">
-  ✨ つよくなれるよ
 </div>
 
 <!-- アップグレード確認モーダル -->
@@ -619,10 +608,19 @@ function getPotentialStars() {
   return Math.floor(Math.cbrt(state.totalSeeds / 1e6));
 }
 function openPrestigeModal() {
-  const gain = getPotentialStars() - state.stars;
+  const gain  = getPotentialStars() - state.stars;
   const total = getPotentialStars();
-  document.getElementById('prestigeGain2').textContent =
-    '⭐' + total + 'つ（＋' + gain + 'つ）で 生産量 +' + total + '% になるよ！';
+  const times = (state.prestiges || 0) + (gain > 0 ? 1 : 0);
+  let gainText = '';
+  if (gain > 0) {
+    gainText = '🌟 あたらしく ' + gain + 'こ もらえるよ！\n合計 ' + total + 'こ → 生産量 +' + total + '%\n（' + times + 'かいめの あつめ）';
+  } else {
+    gainText = '🌟 ' + total + 'こ もってるよ（生産量 +' + total + '%）\nまだ ふやせないみたい…';
+  }
+  document.getElementById('prestigeGain2').textContent = gainText;
+  document.getElementById('prestigeGain2').style.whiteSpace = 'pre-line';
+  const btn = document.getElementById('prestigeOverlay').querySelector('.confirm');
+  if (btn) { btn.disabled = gain <= 0; btn.style.opacity = gain > 0 ? '1' : '0.5'; }
   document.getElementById('prestigeOverlay').classList.remove('hidden');
 }
 function closePrestigeModal() {
@@ -641,7 +639,7 @@ function doPrestige() {
   renderGardenLayer();
   save();
   update();
-  showToast('✨ てんせい！ ⭐' + state.stars + 'つ 生産量 +' + state.stars + '% になったよ！');
+  showToast('🌟 ほしのたね ' + state.stars + 'こ あつまった！ 生産量 +' + state.stars + '% になったよ！');
 }
 
 // タップ処理（x,y は画面座標、省略時はボタン中央）
@@ -758,15 +756,15 @@ function checkMilestone() {
 
 // ===== 数字フォーマット =====
 function formatNum(n) {
-  if (n >= 1e16) return (n / 1e16).toFixed(1) + 'けい';
-  if (n >= 1e12) return (n / 1e12).toFixed(1) + 'ちょう';
-  if (n >= 1e8)  return (n / 1e8).toFixed(1)  + 'おく';
+  if (n >= 1e16) return (n / 1e16).toFixed(1) + '京';
+  if (n >= 1e12) return (n / 1e12).toFixed(1) + '兆';
+  if (n >= 1e8)  return (n / 1e8).toFixed(1)  + '億';
   return Math.floor(n).toLocaleString('ja-JP');
 }
 function formatSeedDisplay(n) {
-  if (n >= 1e16) return { main: Math.floor(n/1e16) + 'けい', sub: '+ ' + Math.floor((n%1e16)/1e12).toLocaleString('ja-JP') + 'ちょう' };
-  if (n >= 1e12) return { main: Math.floor(n/1e12) + 'ちょう', sub: '+ ' + Math.floor((n%1e12)/1e8).toLocaleString('ja-JP') + 'おく' };
-  if (n >= 1e8)  return { main: Math.floor(n/1e8) + 'おく', sub: '+ ' + Math.floor(n%1e8).toLocaleString('ja-JP') };
+  if (n >= 1e16) return { main: Math.floor(n/1e16) + '京', sub: '+ ' + Math.floor((n%1e16)/1e12).toLocaleString('ja-JP') + '兆' };
+  if (n >= 1e12) return { main: Math.floor(n/1e12) + '兆', sub: '+ ' + Math.floor((n%1e12)/1e8).toLocaleString('ja-JP') + '億' };
+  if (n >= 1e8)  return { main: Math.floor(n/1e8) + '億', sub: '+ ' + Math.floor(n%1e8).toLocaleString('ja-JP') };
   return { main: Math.floor(n).toLocaleString('ja-JP'), sub: '' };
 }
 
@@ -851,19 +849,18 @@ function update() {
   const tapBtn = document.getElementById('tapBtn');
   // タップボタンは🏠固定
 
-  // 転生ステータス（種カウンター右下）
-  const potStars   = getPotentialStars();
+  // ほしのたね表示（種カウンター内）
+  const potStars    = getPotentialStars();
   const canPrestige = potStars > state.stars;
   const starEl = document.getElementById('starDisplay');
-  if (state.stars > 0 || state.prestiges > 0) {
+  if (state.stars > 0 || canPrestige) {
     starEl.classList.remove('hidden');
-    starEl.textContent = '⭐' + state.stars + '（+' + state.stars + '%）× ' + state.prestiges + 'かいめ';
+    starEl.textContent = '🌟 ×' + state.stars;
+    if (canPrestige) starEl.classList.add('can-prestige');
+    else             starEl.classList.remove('can-prestige');
   } else {
     starEl.classList.add('hidden');
   }
-  const badge = document.getElementById('prestigeBadge');
-  if (canPrestige) badge.classList.remove('hidden');
-  else             badge.classList.add('hidden');
 
   // ---- ボトムバーバッジ ----
   const hasNew = newlyUnlockedIds.size > 0;
@@ -1042,7 +1039,7 @@ const FLAVOR_POOL = [
   () => (state.plots['mountain'] > 0) ? '🗻 やまの くうきが おいしそう' : null,
   () => (getTotalPerSec() >= 1)  ? '🌱 たねが どんどん ふえてる！' : null,
   () => (getTotalPerSec() >= 1000) ? '✨ はたけが もりもり そだってる！' : null,
-  () => (state.prestiges > 0)    ? '⭐ てんせいした ちからが みなぎってる' : null,
+  () => (state.stars > 0)        ? '🌟 ほしのたねの ちからが みなぎってる' : null,
 ];
 function showFlavorDrift() {
   const msgs = FLAVOR_POOL.map(f => f()).filter(Boolean);
