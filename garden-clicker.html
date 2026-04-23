@@ -223,8 +223,21 @@
     to   { transform: translateX(calc(100vw + 100px)) rotate(360deg) scale(1); }
   }
 
-  /* ひとこと */
-  .flavor-text { font-size: 0.85rem; color: #a1887f; margin-top: 2px; min-height: 1.1em; font-style: italic; }
+  /* ひとこと（背景を流れる） */
+  .flavor-drift {
+    position: fixed; pointer-events: none; z-index: 2;
+    font-size: 1rem; font-weight: 700;
+    color: rgba(255,255,255,0.78);
+    text-shadow: 0 1px 6px rgba(0,0,0,0.28);
+    white-space: nowrap;
+    animation: flavorDrift var(--dur, 28s) linear forwards;
+  }
+  @keyframes flavorDrift {
+    0%   { opacity: 0;   transform: translateX(calc(100vw + 20px)); }
+    8%   { opacity: 1; }
+    88%  { opacity: 1; }
+    100% { opacity: 0;   transform: translateX(-110%); }
+  }
 
   @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
@@ -245,7 +258,6 @@
       <div class="seed-count" id="seedCount">🌱 0</div>
       <div class="seed-sub"   id="seedSub"></div>
       <div class="seed-label">たね</div>
-      <div class="flavor-text" id="flavorText"></div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
       <div class="per-sec" id="perSec">+0 / びょう</div>
@@ -261,7 +273,7 @@
       onpointerup="stopHold()"
       onpointerleave="stopHold()"
       onpointercancel="stopHold()">
-      🌧️
+      🏠
       <span class="tap-hint">タップ・長おし！</span>
     </button>
   </div>
@@ -718,7 +730,7 @@ function update() {
 
   // タップボタンアイコン
   const tapBtn = document.getElementById('tapBtn');
-  tapBtn.childNodes[0].textContent = unlocked.length > 1 ? unlocked[unlocked.length - 1].icon : STAGES[currentStageIdx].emojis[0];
+  // タップボタンは🏠固定
 
   // 転生ステータス（種カウンター右下）
   const potStars   = getPotentialStars();
@@ -857,13 +869,24 @@ const FLAVOR_POOL = [
   () => (getTotalPerSec() >= 1000) ? '✨ はたけが もりもり そだってる！' : null,
   () => (state.prestiges > 0)    ? '⭐ てんせいした ちからが みなぎってる' : null,
 ];
-function updateFlavor() {
+function showFlavorDrift() {
   const msgs = FLAVOR_POOL.map(f => f()).filter(Boolean);
-  const el = document.getElementById('flavorText');
-  if (el) el.textContent = msgs[Math.floor(Math.random() * msgs.length)] || '';
+  if (!msgs.length) return;
+  const msg = msgs[Math.floor(Math.random() * msgs.length)];
+  const el = document.createElement('div');
+  el.className = 'flavor-drift';
+  el.textContent = msg;
+  // 上下は種カウンターとタップボタンの間あたり（画面の20〜40%）
+  el.style.top = (20 + Math.random() * 20) + '%';
+  // 長さに応じてアニメーション時間を調整（文字数 × 0.5秒 + ベース）
+  const dur = Math.max(22, 18 + msg.length * 0.4);
+  el.style.setProperty('--dur', dur + 's');
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), (dur + 1) * 1000);
+  // 次のひとこと：前が半分流れたあたりで次を出す
+  setTimeout(showFlavorDrift, (dur * 0.6 + Math.random() * 6) * 1000);
 }
-updateFlavor();
-setInterval(updateFlavor, 12000);
+setTimeout(showFlavorDrift, 3000); // 起動3秒後から開始
 
 let lastTime = performance.now();
 function gameLoop(now) {
