@@ -349,6 +349,7 @@
   <div class="tt-head"  id="ttHead"></div>
   <div class="tt-row"   id="ttOwned"></div>
   <div class="tt-row"   id="ttRate"></div>
+  <div class="tt-row"   id="ttPct"></div>
   <div class="tt-total" id="ttTotal"></div>
 </div>
 
@@ -924,11 +925,15 @@ function updateStatsTooltip() {
   const owned = state.plots[activeStatsId] || 0;
   const pm    = getPrestigeMultiplier();
   const mult  = getMultiplier(activeStatsId);
-  const perSec = plot.perSec * owned * mult * pm;
-  const total  = Math.floor(state.plotProduced[activeStatsId] || 0);
+  const perSec   = plot.perSec * owned * mult * pm;
+  const totalPS  = getTotalPerSec();
+  const pct      = totalPS > 0 ? (perSec / totalPS * 100) : 0;
+  const pctStr   = pct >= 0.1 ? pct.toFixed(1) + '%' : '< 0.1%';
+  const total    = Math.floor(state.plotProduced[activeStatsId] || 0);
   document.getElementById('ttHead').textContent  = plot.icon + ' ' + plot.name;
   document.getElementById('ttOwned').textContent = 'もってる：' + owned + 'こ';
   document.getElementById('ttRate').textContent  = '+' + formatNum(perSec) + ' / びょう';
+  document.getElementById('ttPct').textContent   = 'ぜんたいの ' + pctStr + ' をたんとう';
   document.getElementById('ttTotal').textContent = 'ごうけい ' + formatNum(total) + ' たね';
 }
 
