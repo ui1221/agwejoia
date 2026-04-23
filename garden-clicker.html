@@ -417,7 +417,7 @@ const PLOTS = [
 
 // 画像またはアイコン絵文字を返すヘルパー
 function plotIconHtml(plot, sizePx) {
-  if (plot.img) return `<img src="${plot.img}" style="width:${sizePx}px;height:${sizePx}px;object-fit:contain;vertical-align:middle;image-rendering:pixelated">`;
+  if (plot.img) return `<img src="${plot.img}" style="width:${sizePx}px;height:${sizePx}px;object-fit:contain;vertical-align:middle;image-rendering:pixelated;pointer-events:none;user-select:none;-webkit-user-select:none" draggable="false" oncontextmenu="return false">`;
   return plot.icon;
 }
 
