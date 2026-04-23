@@ -252,34 +252,15 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* アップグレードセクション */
-  .upgrade-section-title {
-    font-size: 0.78rem; font-weight: 700; color: #6d4c41;
-    letter-spacing: 0.05em; margin-bottom: 8px; padding-left: 2px;
+  /* アップグレード可能カード */
+  .plot-card.upgrade-ready {
+    border-color: #ffd54f;
+    background: linear-gradient(160deg, #fffde7, #ffffff);
   }
-  .upgrade-list {
-    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
-  }
-  .upgrade-chip {
-    background: linear-gradient(135deg, #fff9c4, #ffe082);
-    border: 2px solid #ffd54f;
-    border-radius: 14px; padding: 7px 12px;
-    display: flex; align-items: center; gap: 6px;
-    cursor: pointer; touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    transition: transform 0.12s;
-    animation: popIn 0.3s cubic-bezier(.3,1.8,.5,1);
-  }
-  .upgrade-chip:active { transform: scale(0.93); }
-  .upgrade-chip.cannot-afford { opacity: 0.55; }
-  .upgrade-chip .up-icon { font-size: 1.3rem; line-height: 1; }
-  .upgrade-chip .up-info { display: flex; flex-direction: column; gap: 1px; }
-  .upgrade-chip .up-name { font-size: 0.72rem; font-weight: 700; color: #5d4037; }
-  .upgrade-chip .up-cost { font-size: 0.65rem; font-weight: 700; color: #e65100; }
-
-  .sheet-divider {
-    font-size: 0.78rem; font-weight: 700; color: #6d4c41;
-    letter-spacing: 0.05em; margin-bottom: 8px; padding-left: 2px;
+  .plot-cost.upgrade-btn {
+    background: linear-gradient(135deg, #ffe082, #ffd54f);
+    color: #e65100; border-color: #ffca28;
+    font-size: 0.72rem;
   }
 
   .plots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -379,11 +360,6 @@
   <div class="sheet-handle"></div>
   <div class="sheet-title">🏡 はたけをかう</div>
   <div class="sheet-scroll">
-    <div id="upgradeSection" style="display:none">
-      <div class="upgrade-section-title">⭐ つよくする</div>
-      <div class="upgrade-list" id="upgradeList"></div>
-    </div>
-    <div class="sheet-divider">🏡 しせつ</div>
     <div class="plots" id="plotList"></div>
   </div>
 </div>
@@ -730,35 +706,12 @@ function update() {
     strip.appendChild(chip);
   });
 
-  // ---- アップグレードセクション（変化があるときだけ再描画） ----
+  // アップグレード一覧をMapに変換（plotId → 最優先の1件）
   const availUpgrades = getAvailableUpgrades();
-  const upgradeSection = document.getElementById('upgradeSection');
-  const upgradeList = document.getElementById('upgradeList');
-  // 現在の状態を文字列化して前回と比較
-  const upgradeStateKey = availUpgrades.map(u => u.key + (seeds >= u.cost ? 'y' : 'n')).join(',');
-  if (upgradeList.dataset.stateKey !== upgradeStateKey) {
-    upgradeList.dataset.stateKey = upgradeStateKey;
-    if (availUpgrades.length > 0) {
-      upgradeSection.style.display = '';
-      upgradeList.innerHTML = '';
-      availUpgrades.forEach(u => {
-        const canAfford = seeds >= u.cost;
-        const chip = document.createElement('div');
-        chip.className = 'upgrade-chip' + (canAfford ? '' : ' cannot-afford');
-        chip.innerHTML = `
-          <span class="up-icon">${u.plot.icon}</span>
-          <div class="up-info">
-            <span class="up-name">${u.plot.name} ×2 (${u.tier.label})</span>
-            <span class="up-cost">🌱${formatNum(u.cost)}</span>
-          </div>
-        `;
-        chip.onclick = () => buyUpgrade(u.key);
-        upgradeList.appendChild(chip);
-      });
-    } else {
-      upgradeSection.style.display = 'none';
-    }
-  }
+  const upgradeMap = {};
+  availUpgrades.forEach(u => {
+    if (!upgradeMap[u.plot.id]) upgradeMap[u.plot.id] = u;
+  });
 
   // バッジ＆バー演出
   const hasUpgrade = availUpgrades.some(u => seeds >= u.cost);
@@ -787,10 +740,29 @@ function update() {
       list.appendChild(card);
     }
 
+    const upg = upgradeMap[plot.id]; // このカードのアップグレード（あれば）
+    const upgAffordable = upg && seeds >= upg.cost;
+
     card.className = 'plot-card' +
       (isNew ? ' new-card' : '') +
       (isMaxed ? ' maxed-card' :
+       upg ? ' upgrade-ready' :
        canAfford ? ' can-afford' : ' cannot-afford');
+
+    // カードタップの挙動：アップグレード優先
+    card.onclick = upg ? () => buyUpgrade(upg.key) : () => buyPlot(plot.id);
+
+    let costHtml;
+    if (isMaxed) {
+      costHtml = `<div class="plot-cost maxed-label">さいだい</div>`;
+    } else if (upg) {
+      costHtml = `
+        <div class="plot-cost upgrade-btn ${upgAffordable ? '' : 'disabled'}">
+          ⭐２ばい！ 🌱${formatNum(upg.cost)}
+        </div>`;
+    } else {
+      costHtml = `<div class="plot-cost ${canAfford ? '' : 'disabled'}">🌱${formatNum(cost)}</div>`;
+    }
 
     card.innerHTML = `
       <div class="plot-icon">${plot.icon}</div>
@@ -798,9 +770,7 @@ function update() {
       <div class="plot-rate">+${formatNum(plot.perSec * mult)}/びょう</div>
       ${owned > 0 ? `<div class="plot-owned">もってる：${owned}こ</div>` : ''}
       ${mult > 1 ? `<div class="plot-upgrade">⭐×${mult}</div>` : ''}
-      <div class="plot-cost ${isMaxed ? 'maxed-label' : canAfford ? '' : 'disabled'}">
-        ${isMaxed ? 'さいだい' : '🌱' + formatNum(cost)}
-      </div>
+      ${costHtml}
     `;
   });
 
