@@ -18,76 +18,94 @@
     --radius: 20px;
   }
 
-  /* 長押し誤作動を全面ブロック */
-  * {
-    box-sizing: border-box; margin: 0; padding: 0;
-    -webkit-user-select: none; user-select: none;
-    -webkit-touch-callout: none;
-  }
+  * { box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none; }
 
   body {
     font-family: 'Zen Maru Gothic', sans-serif;
-    /* 背景はJSで動的に切り替える */
     background: linear-gradient(180deg, #546e7a 0%, #78909c 35%, #90a4ae 65%, #b0bec5 100%);
     transition: background 4s ease;
-    min-height: 100vh;
-    color: var(--text);
-    overflow-x: hidden;
+    min-height: 100vh; color: var(--text); overflow-x: hidden;
   }
 
   /* 流れる絵文字 */
-  .clouds {
-    position: fixed; top: 0; left: 0; width: 100%; height: 140px;
-    pointer-events: none; z-index: 0;
-  }
-  .cloud {
-    position: absolute; font-size: 2.2rem; opacity: 0.75;
-    animation: drift linear infinite;
-  }
-  .cloud:nth-child(1) { top: 8px;  animation-duration: 26s; animation-delay: 0s; }
+  .clouds { position: fixed; top: 0; left: 0; width: 100%; height: 140px; pointer-events: none; z-index: 0; }
+  .cloud  { position: absolute; font-size: 2.2rem; opacity: 0.75; animation: drift linear infinite; }
+  .cloud:nth-child(1) { top: 8px;  animation-duration: 26s; }
   .cloud:nth-child(2) { top: 40px; animation-duration: 38s; animation-delay: -14s; font-size: 1.6rem; }
   .cloud:nth-child(3) { top: 14px; animation-duration: 31s; animation-delay: -22s; }
   .cloud:nth-child(4) { top: 55px; animation-duration: 44s; animation-delay: -8s;  font-size: 1.4rem; }
-  @keyframes drift {
-    from { transform: translateX(-80px); }
-    to   { transform: translateX(calc(100vw + 80px)); }
-  }
+  @keyframes drift { from { transform: translateX(-80px); } to { transform: translateX(calc(100vw + 80px)); } }
 
-  /* メインエリア */
-  .wrapper {
-    position: relative; z-index: 1;
-    max-width: 520px; margin: 0 auto;
-    padding: 16px 12px 160px;
-  }
+  .wrapper { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 16px 12px 160px; }
 
   header { text-align: center; padding: 18px 0 10px; }
-  header h1 {
-    font-size: 1.7rem; font-weight: 900; color: var(--soil2);
-    text-shadow: 0 2px 0 rgba(255,255,255,0.6); letter-spacing: 0.04em;
-  }
+  header h1 { font-size: 1.7rem; font-weight: 900; color: var(--soil2); text-shadow: 0 2px 0 rgba(255,255,255,0.6); letter-spacing: 0.04em; }
   header .subtitle { font-size: 0.82rem; color: #795548; margin-top: 2px; }
 
   /* 種カウンター */
   .seed-bar {
     background: var(--card); border-radius: var(--radius);
     box-shadow: var(--shadow); padding: 14px 20px;
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
   }
-  .seed-count {
-    font-size: 2rem; font-weight: 900; color: var(--soil2);
-    line-height: 1.1;
-  }
-  .seed-sub {
-    font-size: 0.78rem; font-weight: 700; color: var(--green);
-    margin-top: 1px; min-height: 1em;
-  }
+  .seed-count { font-size: 2rem; font-weight: 900; color: var(--soil2); line-height: 1.1; }
+  .seed-sub   { font-size: 0.78rem; font-weight: 700; color: var(--green); margin-top: 1px; min-height: 1em; }
   .seed-label { font-size: 0.75rem; color: #795548; margin-top: 1px; }
-  .per-sec {
-    font-size: 0.75rem; color: var(--green); font-weight: 700;
-    background: #e8f5e9; border-radius: 30px; padding: 4px 12px;
-    text-align: right;
+  .per-sec    { font-size: 0.75rem; color: var(--green); font-weight: 700; background: #e8f5e9; border-radius: 30px; padding: 4px 12px; text-align: right; }
+
+  /* 転生ステータス */
+  .prestige-status {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: var(--radius); padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; color: white; font-size: 0.78rem; font-weight: 700;
   }
+  .prestige-status.hidden { display: none; }
+  .prestige-stars { color: #ffd700; font-size: 0.9rem; }
+
+  /* 転生ボタンカード */
+  .prestige-card {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+    border-radius: var(--radius); padding: 14px 18px;
+    color: white; text-align: center; cursor: pointer;
+    margin-bottom: 14px; border: 2px solid #ffd700;
+    box-shadow: 0 0 20px rgba(255,215,0,0.25);
+    animation: starPulse 3s ease-in-out infinite;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  .prestige-card.hidden { display: none; }
+  .prestige-card-title { font-size: 1rem; font-weight: 900; margin-bottom: 4px; }
+  .prestige-card-desc  { font-size: 0.75rem; opacity: 0.85; }
+  .prestige-gain { color: #ffd700; font-weight: 900; font-size: 0.85rem; margin-top: 6px; }
+  @keyframes starPulse {
+    0%,100% { box-shadow: 0 0 16px rgba(255,215,0,0.2); }
+    50%      { box-shadow: 0 0 30px rgba(255,215,0,0.5); }
+  }
+
+  /* 転生確認モーダル */
+  .prestige-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 600; display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .prestige-overlay.hidden { display: none; }
+  .prestige-modal {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border-radius: 24px; border: 2px solid #ffd700;
+    padding: 28px 24px; color: white; text-align: center; max-width: 340px; width: 100%;
+  }
+  .prestige-modal h2 { font-size: 1.2rem; font-weight: 900; margin-bottom: 12px; }
+  .prestige-modal p  { font-size: 0.85rem; line-height: 1.7; margin-bottom: 16px; opacity: 0.9; }
+  .prestige-modal .gain-text { color: #ffd700; font-size: 1rem; font-weight: 900; margin-bottom: 20px; }
+  .modal-btn {
+    display: block; width: 100%; padding: 12px;
+    border-radius: 14px; border: none; font-family: inherit;
+    font-size: 0.9rem; font-weight: 900; cursor: pointer;
+    touch-action: manipulation; margin-bottom: 10px;
+  }
+  .modal-btn.confirm { background: linear-gradient(135deg, #ffd700, #ffb300); color: #1a1a2e; }
+  .modal-btn.cancel  { background: rgba(255,255,255,0.15); color: white; }
 
   /* タップボタン */
   .tap-area { display: flex; justify-content: center; margin-bottom: 18px; }
@@ -96,71 +114,32 @@
     font-size: 5.5rem; line-height: 1;
     filter: drop-shadow(0 4px 8px rgba(80,40,20,0.18));
     transition: transform 0.1s cubic-bezier(.3,1.8,.5,1), filter 0.1s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
     position: relative; padding: 8px; border-radius: 50%;
   }
-  .tap-btn:active {
-    transform: scale(0.88);
-    filter: drop-shadow(0 2px 4px rgba(80,40,20,0.10));
-  }
+  .tap-btn:active { transform: scale(0.88); filter: drop-shadow(0 2px 4px rgba(80,40,20,0.10)); }
   .tap-btn .tap-hint {
-    position: absolute; bottom: -18px; left: 50%;
-    transform: translateX(-50%);
+    position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%);
     font-size: 0.75rem; color: #a1887f; white-space: nowrap; font-weight: 700;
   }
 
   /* フロートテキスト */
-  .float-text {
-    position: fixed; pointer-events: none;
-    font-size: 1.4rem; font-weight: 900; color: var(--accent);
-    text-shadow: 0 2px 6px rgba(0,0,0,0.12);
-    animation: floatUp 0.9s ease-out forwards; z-index: 999;
-  }
-  /* タップ絵文字 */
-  .float-emoji {
-    position: fixed; pointer-events: none;
-    font-size: 1.8rem; line-height: 1;
-    animation: floatEmoji 1.1s ease-out forwards; z-index: 998;
-  }
-  @keyframes floatUp {
-    0%   { opacity: 1; transform: translateY(0) scale(1); }
-    100% { opacity: 0; transform: translateY(-70px) scale(0.7); }
-  }
-  @keyframes floatEmoji {
-    0%   { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
-    100% { opacity: 0; transform: translateY(-90px) scale(0.6) rotate(20deg); }
-  }
+  .float-text  { position: fixed; pointer-events: none; font-size: 1.4rem; font-weight: 900; color: var(--accent); text-shadow: 0 2px 6px rgba(0,0,0,0.12); animation: floatUp 0.9s ease-out forwards; z-index: 999; }
+  .float-emoji { position: fixed; pointer-events: none; font-size: 1.8rem; line-height: 1; animation: floatEmoji 1.1s ease-out forwards; z-index: 998; }
+  @keyframes floatUp    { 0% { opacity:1; transform: translateY(0) scale(1); } 100% { opacity:0; transform: translateY(-70px) scale(0.7); } }
+  @keyframes floatEmoji { 0% { opacity:1; transform: translateY(0) scale(1) rotate(0deg); } 100% { opacity:0; transform: translateY(-90px) scale(0.6) rotate(20deg); } }
 
   /* ========== ボトムバー ========== */
   .bottom-bar {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-    background: rgba(255,255,255,0.96);
-    border-top: 2px solid rgba(109,76,65,0.12);
-    box-shadow: 0 -4px 20px rgba(80,40,20,0.13);
-    padding: 10px 16px 14px;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    background: rgba(255,255,255,0.96); border-top: 2px solid rgba(109,76,65,0.12);
+    box-shadow: 0 -4px 20px rgba(80,40,20,0.13); padding: 10px 16px 14px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   }
-  .bottom-bar-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 8px;
-  }
-  .bottom-bar-label {
-    font-size: 0.8rem; font-weight: 700; color: #795548;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .new-badge {
-    background: var(--accent); color: white;
-    font-size: 0.65rem; font-weight: 900;
-    border-radius: 20px; padding: 1px 7px;
-    animation: pulse 1.4s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%,100% { transform: scale(1); }
-    50%      { transform: scale(1.15); }
-  }
+  .bottom-bar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .bottom-bar-label  { font-size: 0.8rem; font-weight: 700; color: #795548; display: flex; align-items: center; gap: 6px; }
+  .new-badge { background: var(--accent); color: white; font-size: 0.65rem; font-weight: 900; border-radius: 20px; padding: 1px 7px; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
   .bottom-bar-arrow { font-size: 0.85rem; color: #a1887f; transition: transform 0.3s; }
   .bottom-bar-arrow.open { transform: rotate(180deg); }
 
@@ -168,146 +147,60 @@
   .icon-chip {
     display: flex; flex-direction: column; align-items: center;
     gap: 1px; min-width: 44px; position: relative;
-    touch-action: manipulation;
-    cursor: pointer;
+    touch-action: manipulation; cursor: pointer;
   }
-  .icon-chip .chip-icon { font-size: 1.8rem; line-height: 1.2; }
-  .icon-chip .chip-count {
-    font-size: 0.6rem; font-weight: 700; color: #795548;
-    background: #f5f5f5; border-radius: 10px; padding: 0 5px;
-    min-width: 24px; text-align: center;
-  }
-  .icon-chip.empty .chip-icon { opacity: 0.25; filter: grayscale(1); }
+  .icon-chip .chip-icon  { font-size: 1.8rem; line-height: 1.2; }
+  .icon-chip .chip-count { font-size: 0.6rem; font-weight: 700; color: #795548; background: #f5f5f5; border-radius: 10px; padding: 0 5px; min-width: 24px; text-align: center; }
+  .icon-chip.empty .chip-icon  { opacity: 0.25; filter: grayscale(1); }
   .icon-chip.empty .chip-count { color: #bbb; background: none; }
-  .icon-chip.maxed .chip-icon { opacity: 0.4; }
+  .icon-chip.maxed .chip-icon  { opacity: 0.4; }
   .icon-chip.maxed .chip-count { background: #e0e0e0; color: #9e9e9e; }
-
-  /* 所持済み施設：ゆっくりゆらゆら */
-  .icon-chip.owned .chip-icon {
-    animation: sway 4s ease-in-out infinite;
-  }
-  @keyframes sway {
-    0%,100% { transform: rotate(-4deg); }
-    50%      { transform: rotate(4deg); }
-  }
-
-  /* 新しく買える施設：小さくぽんと跳ねる */
-  .icon-chip.can-afford .chip-icon {
-    animation: smallBounce 2.4s ease-in-out infinite;
-  }
-  @keyframes smallBounce {
-    0%,70%,100% { transform: translateY(0); }
-    80%          { transform: translateY(-6px); }
-    90%          { transform: translateY(-2px); }
-  }
-
-  /* 新解禁：金色に光る */
-  .icon-chip.newly-unlocked .chip-icon {
-    opacity: 1; filter: none;
-    animation: newGlow 2.4s ease-in-out infinite;
-  }
-  @keyframes newGlow {
-    0%,100% { filter: drop-shadow(0 0 2px gold); }
-    50%      { filter: drop-shadow(0 0 8px gold) brightness(1.25); }
-  }
-  .icon-chip.newly-unlocked::after {
-    content: '！';
-    position: absolute; top: -4px; right: -2px;
-    background: var(--accent); color: white;
-    font-size: 0.6rem; font-weight: 900;
-    width: 16px; height: 16px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    animation: pulse 1.6s ease-in-out infinite;
-  }
-
-  /* バー全体の演出は廃止（目に優しくないため） */
+  .icon-chip.owned .chip-icon  { animation: sway 4s ease-in-out infinite; }
+  @keyframes sway { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+  .icon-chip.can-afford .chip-icon { animation: smallBounce 2.4s ease-in-out infinite; }
+  @keyframes smallBounce { 0%,70%,100% { transform: translateY(0); } 80% { transform: translateY(-6px); } 90% { transform: translateY(-2px); } }
+  .icon-chip.newly-unlocked .chip-icon { opacity: 1; filter: none; animation: newGlow 2.4s ease-in-out infinite; }
+  @keyframes newGlow { 0%,100% { filter: drop-shadow(0 0 2px gold); } 50% { filter: drop-shadow(0 0 8px gold) brightness(1.25); } }
+  .icon-chip.newly-unlocked::after { content: '！'; position: absolute; top: -4px; right: -2px; background: var(--accent); color: white; font-size: 0.6rem; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: pulse 1.6s ease-in-out infinite; }
 
   /* ========== ボトムシート ========== */
-  .backdrop {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.35); z-index: 300;
-    opacity: 0; pointer-events: none; transition: opacity 0.35s;
-  }
+  .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
   .backdrop.show { opacity: 1; pointer-events: auto; }
-
-  .sheet {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
-    background: #fffdf9; border-radius: 28px 28px 0 0;
-    box-shadow: 0 -8px 40px rgba(80,40,20,0.18);
-    transform: translateY(100%);
-    transition: transform 0.38s cubic-bezier(.32,1.2,.5,1);
-    max-height: 80vh; display: flex; flex-direction: column;
-  }
+  .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: #fffdf9; border-radius: 28px 28px 0 0; box-shadow: 0 -8px 40px rgba(80,40,20,0.18); transform: translateY(100%); transition: transform 0.38s cubic-bezier(.32,1.2,.5,1); max-height: 80vh; display: flex; flex-direction: column; }
   .sheet.show { transform: translateY(0); }
-  .sheet-handle {
-    width: 40px; height: 5px; background: #d7c4bb; border-radius: 3px;
-    margin: 12px auto 0; flex-shrink: 0;
-  }
-  .sheet-title {
-    font-size: 0.9rem; font-weight: 900; color: var(--soil2);
-    text-align: center; padding: 10px 0 12px; flex-shrink: 0;
-  }
-  .sheet-scroll {
-    overflow-y: auto; padding: 0 14px 24px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* アップグレード可能カード */
-  .plot-card.upgrade-ready {
-    border-color: #ffd54f;
-    background: linear-gradient(160deg, #fffde7, #ffffff);
-  }
-  .plot-cost.upgrade-btn {
-    background: linear-gradient(135deg, #ffe082, #ffd54f);
-    color: #e65100; border-color: #ffca28;
-    font-size: 0.72rem;
-  }
+  .sheet-handle { width: 40px; height: 5px; background: #d7c4bb; border-radius: 3px; margin: 12px auto 0; flex-shrink: 0; }
+  .sheet-title  { font-size: 0.9rem; font-weight: 900; color: var(--soil2); text-align: center; padding: 10px 0 12px; flex-shrink: 0; }
+  .sheet-scroll { overflow-y: auto; padding: 0 14px 24px; -webkit-overflow-scrolling: touch; }
 
   .plots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
   .plot-card {
-    background: var(--card); border-radius: var(--radius);
-    box-shadow: var(--shadow); padding: 10px 8px;
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-    border: 2px solid transparent; cursor: pointer;
-    transition: transform 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation; text-align: center;
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 10px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    border: 2px solid transparent; cursor: pointer; transition: transform 0.15s;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation; text-align: center;
   }
-  .plot-card.new-card { animation: popIn 0.4s cubic-bezier(.3,1.8,.5,1); }
-  .plot-card.can-afford { border-color: var(--accent); background: rgba(255,255,255,0.97); }
+  .plot-card.new-card      { animation: popIn 0.4s cubic-bezier(.3,1.8,.5,1); }
+  .plot-card.can-afford    { border-color: var(--accent); background: rgba(255,255,255,0.97); }
   .plot-card.cannot-afford { opacity: 0.68; }
-  .plot-card.maxed-card { opacity: 0.5; cursor: default; }
+  .plot-card.maxed-card    { opacity: 0.5; cursor: default; }
+  .plot-card.upgrade-ready { border-color: #ffd54f; background: linear-gradient(160deg, #fffde7, #ffffff); }
   .plot-card:not(.maxed-card):active { transform: scale(0.94); }
 
-  .plot-icon { font-size: 2rem; line-height: 1.2; }
-  .plot-name { font-size: 0.85rem; font-weight: 700; color: var(--soil2); }
-  .plot-rate { font-size: 0.7rem; color: var(--green); font-weight: 700; }
-  .plot-cost {
-    font-size: 0.76rem; font-weight: 700; color: var(--accent);
-    background: #fce4ec; border-radius: 20px; padding: 2px 10px; margin-top: 2px;
-  }
-  .plot-cost.disabled { color: #aaa; background: #f0f0f0; }
+  .plot-icon    { font-size: 2rem; line-height: 1.2; }
+  .plot-name    { font-size: 0.85rem; font-weight: 700; color: var(--soil2); }
+  .plot-rate    { font-size: 0.7rem; color: var(--green); font-weight: 700; }
+  .plot-cost    { font-size: 0.76rem; font-weight: 700; color: var(--accent); background: #fce4ec; border-radius: 20px; padding: 2px 10px; margin-top: 2px; }
+  .plot-cost.disabled    { color: #aaa; background: #f0f0f0; }
   .plot-cost.maxed-label { color: #9e9e9e; background: #eeeeee; }
-  .plot-owned { font-size: 0.68rem; color: #795548; font-weight: 700; }
+  .plot-cost.upgrade-btn { background: linear-gradient(135deg, #ffe082, #ffd54f); color: #e65100; font-size: 0.72rem; }
+  .plot-owned   { font-size: 0.68rem; color: #795548; font-weight: 700; }
   .plot-upgrade { font-size: 0.65rem; color: #ff8f00; font-weight: 700; }
 
-  @keyframes popIn {
-    0%   { transform: scale(0); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
+  @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
   /* トースト */
-  .toast {
-    position: fixed; bottom: 120px; left: 50%;
-    transform: translateX(-50%) translateY(60px);
-    background: var(--soil2); color: white;
-    border-radius: 30px; padding: 12px 24px;
-    font-size: 0.9rem; font-weight: 700;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.2); z-index: 1000;
-    transition: transform 0.4s cubic-bezier(.3,1.4,.5,1), opacity 0.4s;
-    opacity: 0; white-space: nowrap;
-  }
+  .toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--soil2); color: white; border-radius: 30px; padding: 12px 24px; font-size: 0.9rem; font-weight: 700; box-shadow: 0 6px 24px rgba(0,0,0,0.2); z-index: 1000; transition: transform 0.4s cubic-bezier(.3,1.4,.5,1), opacity 0.4s; opacity: 0; white-space: nowrap; }
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 </style>
 </head>
@@ -326,23 +219,50 @@
     <p class="subtitle">たねをあつめて、はたけをそだてよう</p>
   </header>
 
+  <!-- 転生ステータス -->
+  <div class="prestige-status hidden" id="prestigeStatus">
+    <span>✨ てんせい <span id="prestigeCount">0</span>かいめ</span>
+    <span class="prestige-stars" id="starDisplay">⭐0</span>
+  </div>
+
+  <!-- 種カウンター -->
   <div class="seed-bar">
     <div>
       <div class="seed-count" id="seedCount">🌱 0</div>
-      <div class="seed-sub" id="seedSub"></div>
+      <div class="seed-sub"   id="seedSub"></div>
       <div class="seed-label">たね</div>
     </div>
     <div class="per-sec" id="perSec">+0<br>/ びょう</div>
   </div>
 
+  <!-- タップボタン -->
   <div class="tap-area">
     <button class="tap-btn" id="tapBtn" onclick="tap(event)" ontouchstart="">
       🌧️
       <span class="tap-hint">タップ！</span>
     </button>
   </div>
+
+  <!-- 転生ボタン -->
+  <div class="prestige-card hidden" id="prestigeCard" onclick="openPrestigeModal()">
+    <div class="prestige-card-title">✨ つよくなって もう一度！</div>
+    <div class="prestige-card-desc">種と施設をリセットして、強くなって始められるよ</div>
+    <div class="prestige-gain" id="prestigeGain"></div>
+  </div>
 </div>
 
+<!-- 転生確認モーダル -->
+<div class="prestige-overlay hidden" id="prestigeOverlay">
+  <div class="prestige-modal">
+    <h2>✨ てんせいする？</h2>
+    <p>種と施設・強化はリセットされるけど、<br>これまで育てた分だけ強くなって<br>最初から始められるよ！<br><br>強くなった分は次の冒険でずっと続くよ。</p>
+    <div class="prestige-gain" id="prestigeGain2"></div>
+    <button class="modal-btn confirm" onclick="doPrestige()">てんせいする！ ✨</button>
+    <button class="modal-btn cancel"  onclick="closePrestigeModal()">まだつづける</button>
+  </div>
+</div>
+
+<!-- ボトムバー -->
 <div class="bottom-bar" id="bottomBar" onclick="openSheet()">
   <div class="bottom-bar-header">
     <div class="bottom-bar-label">
@@ -367,21 +287,26 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== 施設定義（バランス調整済み）=====
+// ===== 施設定義（CC準拠・16種）=====
 const PLOTS = [
-  { id: 'pot',      name: 'うえきばち',    icon: '🪴', perSec: 1,      baseCost: 10 },
-  { id: 'flower',   name: 'かだん',        icon: '🌸', perSec: 5,      baseCost: 100 },
-  { id: 'veggie',   name: 'やさいばたけ',  icon: '🥕', perSec: 20,     baseCost: 1000 },
-  { id: 'tree',     name: 'くだものの木',  icon: '🌳', perSec: 80,     baseCost: 12000 },
-  { id: 'garden',   name: 'おにわ',        icon: '🏡', perSec: 300,    baseCost: 150000 },   // ← ここから急勾配
-  { id: 'pond',     name: 'いけ',          icon: '🪷', perSec: 1200,   baseCost: 2000000 },
-  { id: 'neighbor', name: 'となりのにわ',  icon: '🏘️', perSec: 5000,   baseCost: 30000000 },
-  { id: 'honey',    name: 'はちみつ',      icon: '🍯', perSec: 20000,  baseCost: 500000000 },
-  { id: 'mountain', name: 'やまのはたけ',  icon: '🗻', perSec: 80000,  baseCost: 8000000000 },
-  { id: 'rainbow',  name: 'にじのその',    icon: '🌈', perSec: 300000, baseCost: 100000000000 },
+  { id: 'pot',       name: 'うえきばち',        icon: '🪴', perSec: 0.1,         baseCost: 15 },
+  { id: 'flower',    name: 'かだん',            icon: '🌸', perSec: 0.8,         baseCost: 100 },
+  { id: 'veggie',    name: 'やさいばたけ',      icon: '🥕', perSec: 6,           baseCost: 1100 },
+  { id: 'tree',      name: 'くだものの木',      icon: '🌳', perSec: 28,          baseCost: 12000 },
+  { id: 'garden',    name: 'おにわ',            icon: '🏡', perSec: 130,         baseCost: 130000 },
+  { id: 'pond',      name: 'いけ',              icon: '🪷', perSec: 700,         baseCost: 1400000 },
+  { id: 'neighbor',  name: 'となりのにわ',      icon: '🏘️', perSec: 3900,        baseCost: 20000000 },
+  { id: 'honey',     name: 'はちみつ',          icon: '🍯', perSec: 22000,       baseCost: 330000000 },
+  { id: 'mountain',  name: 'やまのはたけ',      icon: '🗻', perSec: 130000,      baseCost: 5100000000 },
+  { id: 'rainbow',   name: 'にじのその',        icon: '🌈', perSec: 780000,      baseCost: 75000000000 },
+  { id: 'sunflower', name: 'ひまわりばたけ',    icon: '🌻', perSec: 4400000,     baseCost: 1000000000000 },
+  { id: 'mushroom',  name: 'きのこのもり',      icon: '🍄', perSec: 26000000,    baseCost: 14000000000000 },
+  { id: 'rice',      name: 'たんぼ',            icon: '🌾', perSec: 160000000,   baseCost: 170000000000000 },
+  { id: 'cloud',     name: 'くものうえのはたけ', icon: '☁️', perSec: 1000000000, baseCost: 2100000000000000 },
+  { id: 'planet',    name: 'ほしのそら',        icon: '🪐', perSec: 6500000000,  baseCost: 26000000000000000 },
+  { id: 'earth',     name: 'ちきゅうのはたけ',  icon: '🌍', perSec: 40000000000, baseCost: 310000000000000000 },
 ];
 
-// アップグレードティア定義（閾値・コスト倍率・ラベル）
 const UPGRADE_TIERS = [
   { threshold: 1,  costMult: 5,    label: 'Lv.1' },
   { threshold: 5,  costMult: 50,   label: 'Lv.2' },
@@ -389,65 +314,38 @@ const UPGRADE_TIERS = [
   { threshold: 50, costMult: 5000, label: 'Lv.4' },
 ];
 const MAX_OWNED = 50;
+const OFFLINE_CAP_SEC = 2 * 60 * 60;
 
-// ===== 背景ステージ定義 =====
+// ===== 背景ステージ（7段階・16種対応）=====
 const STAGES = [
-  { // 0: 1種 — 雨の曇り空
-    bg: 'linear-gradient(180deg, #546e7a 0%, #78909c 35%, #90a4ae 65%, #b0bec5 100%)',
-    emojis: ['🌧️','☁️','🌧️','💧'],
-  },
-  { // 1: 2〜3種 — 薄曇り
-    bg: 'linear-gradient(180deg, #7986cb 0%, #9fa8da 35%, #c5cae9 65%, #e8eaf6 100%)',
-    emojis: ['⛅','🌥️','☁️','🌥️'],
-  },
-  { // 2: 4〜5種 — 晴れ間
-    bg: 'linear-gradient(180deg, #29b6f6 0%, #81d4fa 35%, #b3e5fc 65%, #e1f5fe 100%)',
-    emojis: ['☀️','🌤️','🌱','☀️'],
-  },
-  { // 3: 6〜7種 — 春の陽気
-    bg: 'linear-gradient(180deg, #26c6da 0%, #80deea 35%, #ffe082 65%, #f1f8e9 100%)',
-    emojis: ['🌸','🌼','🦋','🌸'],
-  },
-  { // 4: 8〜9種 — 黄金の午後
-    bg: 'linear-gradient(180deg, #ffa726 0%, #ffcc02 35%, #ffe57f 65%, #fff8e1 100%)',
-    emojis: ['🌺','✨','🌟','🌺'],
-  },
-  { // 5: 10種全解禁 — 虹の空
-    bg: 'linear-gradient(180deg, #ce93d8 0%, #90caf9 35%, #ffe082 65%, #f8bbd0 100%)',
-    emojis: ['🌈','⭐','🎉','✨'],
-  },
+  { bg: 'linear-gradient(180deg, #546e7a 0%, #78909c 35%, #90a4ae 65%, #b0bec5 100%)', emojis: ['🌧️','☁️','🌧️','💧'] },
+  { bg: 'linear-gradient(180deg, #7986cb 0%, #9fa8da 35%, #c5cae9 65%, #e8eaf6 100%)', emojis: ['⛅','🌥️','☁️','🌥️'] },
+  { bg: 'linear-gradient(180deg, #29b6f6 0%, #81d4fa 35%, #b3e5fc 65%, #e1f5fe 100%)', emojis: ['☀️','🌤️','🌱','☀️'] },
+  { bg: 'linear-gradient(180deg, #26c6da 0%, #80deea 35%, #ffe082 65%, #f1f8e9 100%)', emojis: ['🌸','🌼','🦋','🌸'] },
+  { bg: 'linear-gradient(180deg, #ffa726 0%, #ffcc02 35%, #ffe57f 65%, #fff8e1 100%)', emojis: ['🌺','✨','🌟','🌺'] },
+  { bg: 'linear-gradient(180deg, #7e57c2 0%, #ba68c8 35%, #f48fb1 65%, #fff9c4 100%)', emojis: ['🌙','⭐','🌟','💫'] },
+  { bg: 'linear-gradient(180deg, #1a237e 0%, #283593 35%, #1565c0 65%, #0277bd 100%)', emojis: ['🌍','🪐','✨','🌌'] },
 ];
-
-function getStageIndex(unlockedCount) {
-  if (unlockedCount >= 10) return 5;
-  if (unlockedCount >= 8)  return 4;
-  if (unlockedCount >= 6)  return 3;
-  if (unlockedCount >= 4)  return 2;
-  if (unlockedCount >= 2)  return 1;
+function getStageIndex(n) {
+  if (n >= 16) return 6;
+  if (n >= 13) return 5;
+  if (n >= 10) return 4;
+  if (n >= 7)  return 3;
+  if (n >= 4)  return 2;
+  if (n >= 2)  return 1;
   return 0;
 }
-
 let currentStageIdx = -1;
 function applyStage(idx) {
   if (idx === currentStageIdx) return;
   currentStageIdx = idx;
-  const s = STAGES[idx];
-  document.body.style.background = s.bg;
-  const clouds = document.getElementById('clouds');
-  const spans = clouds.querySelectorAll('.cloud');
-  s.emojis.forEach((e, i) => { if (spans[i]) spans[i].textContent = e; });
-  // タップボタンも最初だけ同期
-  if (idx === 0) {
-    const btn = document.getElementById('tapBtn');
-    if (btn.childNodes[0]) btn.childNodes[0].textContent = '🌧️';
-  }
+  document.body.style.background = STAGES[idx].bg;
+  const spans = document.getElementById('clouds').querySelectorAll('.cloud');
+  STAGES[idx].emojis.forEach((e, i) => { if (spans[i]) spans[i].textContent = e; });
 }
 
 // ===== 状態 =====
-const OFFLINE_CAP_SEC = 2 * 60 * 60;
-let state = { seeds: 0, plots: {}, upgrades: {} };
-let sheetOpen = false;
-let newlyUnlockedIds = new Set();
+let state = { seeds: 0, plots: {}, upgrades: {}, totalSeeds: 0, stars: 0, prestiges: 0 };
 
 function save() {
   try {
@@ -461,6 +359,13 @@ function load() {
     if (d) state = JSON.parse(d);
   } catch(e){}
 }
+function migrate() {
+  if (!state.plots)      state.plots      = {};
+  if (!state.upgrades)   state.upgrades   = {};
+  if (!state.totalSeeds) state.totalSeeds  = state.seeds || 0;
+  if (!state.stars)      state.stars       = 0;
+  if (!state.prestiges)  state.prestiges   = 0;
+}
 function applyOfflineIncome() {
   const savedAt = parseInt(localStorage.getItem('garden_saved_at') || '0', 10);
   if (!savedAt) return;
@@ -469,78 +374,69 @@ function applyOfflineIncome() {
   const gained = Math.floor(getTotalPerSec() * elapsed);
   if (gained <= 0) return;
   state.seeds += gained;
+  state.totalSeeds += gained;
   const mins = Math.floor(elapsed / 60);
   const timeStr = mins >= 60 ? '2じかんぶん' : mins + 'ふんぶん';
   setTimeout(() => showToast('🌙 おるすのあいだに ' + timeStr + ' +' + formatNum(gained) + 'たね！'), 800);
 }
-load();
-// 旧セーブとの互換：不足フィールドを補完
-if (!state.plots)    state.plots    = {};
-if (!state.upgrades) state.upgrades = {};
-applyOfflineIncome();
+load(); migrate(); applyOfflineIncome();
 
 // ===== ゲームロジック =====
 function getCost(plot) {
   return Math.floor(plot.baseCost * Math.pow(1.15, state.plots[plot.id] || 0));
 }
-// 購入済みアップグレードから倍率を計算
+function getPrestigeMultiplier() {
+  return 1 + state.stars * 0.01;
+}
 function getMultiplier(plotId) {
-  return UPGRADE_TIERS.reduce((mult, tier) => {
-    return state.upgrades[plotId + '_' + tier.threshold] ? mult * 2 : mult;
-  }, 1);
-}
-
-// 購入可能なアップグレード一覧（解禁済み＆未購入）
-function getAvailableUpgrades() {
-  const result = [];
-  PLOTS.forEach(plot => {
-    const owned = state.plots[plot.id] || 0;
-    UPGRADE_TIERS.forEach(tier => {
-      const key = plot.id + '_' + tier.threshold;
-      if (owned >= tier.threshold && !state.upgrades[key]) {
-        result.push({
-          key,
-          plot,
-          tier,
-          cost: Math.floor(plot.baseCost * tier.costMult),
-        });
-      }
-    });
-  });
-  return result;
-}
-
-function buyUpgrade(key) {
-  const avail = getAvailableUpgrades().find(u => u.key === key);
-  if (!avail) return;
-  if (state.seeds < avail.cost) return;
-  state.seeds -= avail.cost;
-  state.upgrades[key] = true;
-  showToast(avail.plot.icon + ' ' + avail.plot.name + ' がパワーアップ！ ×2');
-  save();
-  update();
+  return UPGRADE_TIERS.reduce((m, t) => state.upgrades[plotId + '_' + t.threshold] ? m * 2 : m, 1);
 }
 function getUnlockedPlots() {
-  return PLOTS.filter((plot, i) => {
-    if (i === 0) return true;
-    return (state.plots[PLOTS[i - 1].id] || 0) >= 1;
-  });
+  return PLOTS.filter((p, i) => i === 0 || (state.plots[PLOTS[i-1].id] || 0) >= 1);
 }
 function getTotalPerSec() {
+  const pm = getPrestigeMultiplier();
   return PLOTS.reduce((sum, p) => {
     const owned = state.plots[p.id] || 0;
-    return sum + p.perSec * owned * getMultiplier(p.id);
+    return sum + p.perSec * owned * getMultiplier(p.id) * pm;
   }, 0);
 }
 function getPerClick() {
-  return Math.pow(2, getUnlockedPlots().length - 1);
+  return Math.max(1, Math.pow(2, getUnlockedPlots().length - 1));
+}
+
+// 転生
+function getPotentialStars() {
+  return Math.floor(Math.cbrt(state.totalSeeds / 1e6));
+}
+function openPrestigeModal() {
+  const gain = getPotentialStars() - state.stars;
+  const total = getPotentialStars();
+  document.getElementById('prestigeGain2').textContent =
+    '⭐' + total + 'つ（＋' + gain + 'つ）で 生産量 +' + total + '% になるよ！';
+  document.getElementById('prestigeOverlay').classList.remove('hidden');
+}
+function closePrestigeModal() {
+  document.getElementById('prestigeOverlay').classList.add('hidden');
+}
+function doPrestige() {
+  const newStars = getPotentialStars();
+  if (newStars <= state.stars) return;
+  state.stars     = newStars;
+  state.prestiges = (state.prestiges || 0) + 1;
+  state.seeds     = 0;
+  state.plots     = {};
+  state.upgrades  = {};
+  closePrestigeModal();
+  save();
+  update();
+  showToast('✨ てんせい！ ⭐' + state.stars + 'つ 生産量 +' + state.stars + '% になったよ！');
 }
 
 function tap(e) {
   const pc = getPerClick();
   state.seeds += pc;
-
-  // たね数フロートテキスト
+  state.totalSeeds += pc;
   const el = document.createElement('div');
   el.className = 'float-text';
   el.textContent = '+' + formatNum(pc) + '🌱';
@@ -549,14 +445,11 @@ function tap(e) {
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 900);
 
-  // ステージの絵文字をランダムに飛ばす
   const emojis = STAGES[currentStageIdx >= 0 ? currentStageIdx : 0].emojis;
-  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
   const ef = document.createElement('div');
   ef.className = 'float-emoji';
-  ef.textContent = emoji;
-  const spread = (Math.random() - 0.5) * 60;
-  ef.style.left = (e.clientX - 16 + spread) + 'px';
+  ef.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+  ef.style.left = (e.clientX - 16 + (Math.random() - 0.5) * 60) + 'px';
   ef.style.top  = (e.clientY - 30) + 'px';
   document.body.appendChild(ef);
   setTimeout(() => ef.remove(), 1100);
@@ -573,37 +466,57 @@ function buyPlot(id) {
   state.seeds -= cost;
   state.plots[id] = owned + 1;
 
-  // 新アップグレード解禁チェック
-  UPGRADE_TIERS.forEach(tier => {
-    if (owned < tier.threshold && state.plots[id] >= tier.threshold) {
-      showToast('⭐ ' + plot.name + ' の強化が解禁！ ショップを確認してね');
+  UPGRADE_TIERS.forEach(t => {
+    if (owned < t.threshold && state.plots[id] >= t.threshold) {
+      showToast('⭐ ' + plot.name + ' の強化が解禁！');
     }
   });
-  if (state.plots[id] >= MAX_OWNED) {
-    showToast(plot.icon + ' ' + plot.name + ' がさいだいになった！');
-  }
+  if (state.plots[id] >= MAX_OWNED) showToast(plot.icon + ' ' + plot.name + ' がさいだいになった！');
 
   checkUnlock();
   save();
   update();
 }
 
+function getAvailableUpgrades() {
+  const result = [];
+  PLOTS.forEach(plot => {
+    const owned = state.plots[plot.id] || 0;
+    UPGRADE_TIERS.forEach(tier => {
+      const key = plot.id + '_' + tier.threshold;
+      if (owned >= tier.threshold && !state.upgrades[key]) {
+        result.push({ key, plot, tier, cost: Math.floor(plot.baseCost * tier.costMult) });
+      }
+    });
+  });
+  return result;
+}
+function buyUpgrade(key) {
+  const u = getAvailableUpgrades().find(u => u.key === key);
+  if (!u || state.seeds < u.cost) return;
+  state.seeds -= u.cost;
+  state.upgrades[key] = true;
+  showToast(u.plot.icon + ' ' + u.plot.name + ' がパワーアップ！ ×2');
+  save();
+  update();
+}
+
 let prevUnlockedCount = 0;
+let newlyUnlockedIds = new Set();
 function checkUnlock() {
   const unlocked = getUnlockedPlots();
   if (unlocked.length > prevUnlockedCount) {
     for (let i = prevUnlockedCount; i < unlocked.length; i++) {
       const p = unlocked[i];
       newlyUnlockedIds.add(p.id);
-      const newPc = Math.pow(2, unlocked.length - 1);
-      showToast(p.icon + ' ' + p.name + ' が解禁！ タップが×' + newPc + 'に！');
+      showToast(p.icon + ' ' + p.name + ' が解禁！');
     }
     prevUnlockedCount = unlocked.length;
   }
 }
 
 let lastMilestone = 0;
-const milestones = [100, 500, 2000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000];
+const milestones = [100, 1000, 10000, 100000, 1e6, 1e8, 1e10, 1e12, 1e14, 1e16];
 function checkMilestone() {
   milestones.forEach(m => {
     if (state.seeds >= m && m > lastMilestone) {
@@ -615,23 +528,15 @@ function checkMilestone() {
 
 // ===== 数字フォーマット =====
 function formatNum(n) {
+  if (n >= 1e16) return (n / 1e16).toFixed(1) + 'けい';
   if (n >= 1e12) return (n / 1e12).toFixed(1) + 'ちょう';
   if (n >= 1e8)  return (n / 1e8).toFixed(1)  + 'おく';
   return Math.floor(n).toLocaleString('ja-JP');
 }
-
-// メインカウンター：大きい単位 + 下の桁を2行で表示
 function formatSeedDisplay(n) {
-  if (n >= 1e12) {
-    const main = Math.floor(n / 1e12) + 'ちょう';
-    const sub  = '+ ' + Math.floor((n % 1e12) / 1e8).toLocaleString('ja-JP') + 'おく';
-    return { main, sub };
-  }
-  if (n >= 1e8) {
-    const main = Math.floor(n / 1e8) + 'おく';
-    const sub  = '+ ' + Math.floor((n % 1e8)).toLocaleString('ja-JP');
-    return { main, sub };
-  }
+  if (n >= 1e16) return { main: Math.floor(n/1e16) + 'けい', sub: '+ ' + Math.floor((n%1e16)/1e12).toLocaleString('ja-JP') + 'ちょう' };
+  if (n >= 1e12) return { main: Math.floor(n/1e12) + 'ちょう', sub: '+ ' + Math.floor((n%1e12)/1e8).toLocaleString('ja-JP') + 'おく' };
+  if (n >= 1e8)  return { main: Math.floor(n/1e8) + 'おく', sub: '+ ' + Math.floor(n%1e8).toLocaleString('ja-JP') };
   return { main: Math.floor(n).toLocaleString('ja-JP'), sub: '' };
 }
 
@@ -645,7 +550,6 @@ function showToast(msg) {
 }
 
 function openSheet() {
-  sheetOpen = true;
   document.getElementById('sheet').classList.add('show');
   document.getElementById('backdrop').classList.add('show');
   document.getElementById('barArrow').classList.add('open');
@@ -653,7 +557,6 @@ function openSheet() {
   document.getElementById('newBadge').style.display = 'none';
 }
 function closeSheet() {
-  sheetOpen = false;
   document.getElementById('sheet').classList.remove('show');
   document.getElementById('backdrop').classList.remove('show');
   document.getElementById('barArrow').classList.remove('open');
@@ -668,106 +571,88 @@ function update() {
   document.getElementById('perSec').textContent    = '+' + formatNum(getTotalPerSec()) + ' / びょう';
 
   const unlocked = getUnlockedPlots();
-
-  // 背景ステージ更新
   applyStage(getStageIndex(unlocked.length));
 
   // タップボタンアイコン
   const tapBtn = document.getElementById('tapBtn');
-  const stageEmojis = STAGES[currentStageIdx].emojis;
-  tapBtn.childNodes[0].textContent = unlocked.length > 1
-    ? unlocked[unlocked.length - 1].icon
-    : stageEmojis[0];
+  tapBtn.childNodes[0].textContent = unlocked.length > 1 ? unlocked[unlocked.length - 1].icon : STAGES[currentStageIdx].emojis[0];
+
+  // 転生ステータス・ボタン
+  const potStars   = getPotentialStars();
+  const canPrestige = potStars > state.stars;
+  const prestigeStatus = document.getElementById('prestigeStatus');
+  if (state.stars > 0 || state.prestiges > 0) {
+    prestigeStatus.classList.remove('hidden');
+    document.getElementById('prestigeCount').textContent = state.prestiges;
+    document.getElementById('starDisplay').textContent   = '⭐' + state.stars + ' (+' + state.stars + '%)';
+  }
+  const card = document.getElementById('prestigeCard');
+  if (canPrestige) {
+    card.classList.remove('hidden');
+    const gain = potStars - state.stars;
+    document.getElementById('prestigeGain').textContent =
+      'いまてんせいすると ⭐' + potStars + 'つ（＋' + gain + '）生産量 +' + potStars + '%';
+  } else {
+    card.classList.add('hidden');
+  }
 
   // ---- アイコンストリップ ----
   const strip = document.getElementById('iconStrip');
   strip.innerHTML = '';
-  let hasAffordable = false;
-
   unlocked.forEach(plot => {
     const owned = state.plots[plot.id] || 0;
-    const isMaxed = owned >= MAX_OWNED;
+    const isMaxed   = owned >= MAX_OWNED;
     const canAfford = !isMaxed && seeds >= getCost(plot);
-    if (canAfford) hasAffordable = true;
-    const isNew = newlyUnlockedIds.has(plot.id);
-
+    const isNew     = newlyUnlockedIds.has(plot.id);
     const chip = document.createElement('div');
     chip.className = 'icon-chip' +
-      (isMaxed ? ' maxed' :
-       owned === 0 && !isNew ? ' empty' :
-       isNew ? ' newly-unlocked' :
-       canAfford ? ' can-afford' :
-       owned > 0 ? ' owned' : '');
-    chip.innerHTML = `
-      <span class="chip-icon">${plot.icon}</span>
-      <span class="chip-count">${isMaxed ? 'MAX' : owned > 0 ? owned + 'こ' : '－'}</span>
-    `;
+      (isMaxed ? ' maxed' : owned === 0 && !isNew ? ' empty' : isNew ? ' newly-unlocked' : canAfford ? ' can-afford' : owned > 0 ? ' owned' : '');
+    chip.innerHTML = `<span class="chip-icon">${plot.icon}</span><span class="chip-count">${isMaxed ? 'MAX' : owned > 0 ? owned + 'こ' : '－'}</span>`;
     chip.onclick = (e) => { e.stopPropagation(); buyPlot(plot.id); };
     strip.appendChild(chip);
   });
 
-  // アップグレード一覧をMapに変換（plotId → 最優先の1件）
-  const availUpgrades = getAvailableUpgrades();
-  const upgradeMap = {};
-  availUpgrades.forEach(u => {
-    if (!upgradeMap[u.plot.id]) upgradeMap[u.plot.id] = u;
-  });
-
-  // バッジ＆バー演出
-  const hasUpgrade = availUpgrades.some(u => seeds >= u.cost);
-  const badge = document.getElementById('newBadge');
-  const bar   = document.getElementById('bottomBar');
-  badge.style.display = newlyUnlockedIds.size > 0 ? '' : 'none';
-  bar.classList.remove('has-action');
+  const hasNew = newlyUnlockedIds.size > 0;
+  document.getElementById('newBadge').style.display = hasNew ? '' : 'none';
 
   // ---- シート内グリッド ----
   const list = document.getElementById('plotList');
   const existingIds = new Set(Array.from(list.querySelectorAll('.plot-card')).map(el => el.dataset.id));
+  const availUpgrades = getAvailableUpgrades();
+  const upgradeMap = {};
+  availUpgrades.forEach(u => { if (!upgradeMap[u.plot.id]) upgradeMap[u.plot.id] = u; });
 
   unlocked.forEach(plot => {
-    const owned = state.plots[plot.id] || 0;
-    const isMaxed = owned >= MAX_OWNED;
-    const cost = getCost(plot);
+    const owned     = state.plots[plot.id] || 0;
+    const isMaxed   = owned >= MAX_OWNED;
+    const cost      = getCost(plot);
     const canAfford = !isMaxed && seeds >= cost;
-    const mult = getMultiplier(plot.id);
+    const mult      = getMultiplier(plot.id);
+    const upg       = upgradeMap[plot.id];
+    const upgAfford = upg && seeds >= upg.cost;
 
     let card = list.querySelector(`[data-id="${plot.id}"]`);
-    const isNew = !existingIds.has(plot.id);
     if (!card) {
       card = document.createElement('div');
       card.dataset.id = plot.id;
-      card.onclick = () => buyPlot(plot.id);
       list.appendChild(card);
     }
 
-    const upg = upgradeMap[plot.id]; // このカードのアップグレード（あれば）
-    const upgAffordable = upg && seeds >= upg.cost;
-
     card.className = 'plot-card' +
-      (isNew ? ' new-card' : '') +
-      (isMaxed ? ' maxed-card' :
-       upg ? ' upgrade-ready' :
-       canAfford ? ' can-afford' : ' cannot-afford');
-
-    // カードタップの挙動：アップグレード優先
+      (!existingIds.has(plot.id) ? ' new-card' : '') +
+      (isMaxed ? ' maxed-card' : upg ? ' upgrade-ready' : canAfford ? ' can-afford' : ' cannot-afford');
     card.onclick = upg ? () => buyUpgrade(upg.key) : () => buyPlot(plot.id);
 
     let costHtml;
-    if (isMaxed) {
-      costHtml = `<div class="plot-cost maxed-label">さいだい</div>`;
-    } else if (upg) {
-      costHtml = `
-        <div class="plot-cost upgrade-btn ${upgAffordable ? '' : 'disabled'}">
-          ⭐２ばい！ 🌱${formatNum(upg.cost)}
-        </div>`;
-    } else {
-      costHtml = `<div class="plot-cost ${canAfford ? '' : 'disabled'}">🌱${formatNum(cost)}</div>`;
-    }
+    if (isMaxed)    costHtml = `<div class="plot-cost maxed-label">さいだい</div>`;
+    else if (upg)   costHtml = `<div class="plot-cost upgrade-btn ${upgAfford ? '' : 'disabled'}">⭐２ばい！ 🌱${formatNum(upg.cost)}</div>`;
+    else            costHtml = `<div class="plot-cost ${canAfford ? '' : 'disabled'}">🌱${formatNum(cost)}</div>`;
 
+    const pm = getPrestigeMultiplier();
     card.innerHTML = `
       <div class="plot-icon">${plot.icon}</div>
       <div class="plot-name">${plot.name}</div>
-      <div class="plot-rate">+${formatNum(plot.perSec * mult)}/びょう</div>
+      <div class="plot-rate">+${formatNum(plot.perSec * mult * pm)}/びょう</div>
       ${owned > 0 ? `<div class="plot-owned">もってる：${owned}こ</div>` : ''}
       ${mult > 1 ? `<div class="plot-upgrade">⭐×${mult}</div>` : ''}
       ${costHtml}
@@ -775,9 +660,7 @@ function update() {
   });
 
   const unlockedIds = new Set(unlocked.map(p => p.id));
-  list.querySelectorAll('.plot-card').forEach(card => {
-    if (!unlockedIds.has(card.dataset.id)) card.remove();
-  });
+  list.querySelectorAll('.plot-card').forEach(card => { if (!unlockedIds.has(card.dataset.id)) card.remove(); });
 }
 
 prevUnlockedCount = getUnlockedPlots().length;
@@ -787,7 +670,9 @@ let lastTime = performance.now();
 function gameLoop(now) {
   const dt = (now - lastTime) / 1000;
   lastTime = now;
-  state.seeds += getTotalPerSec() * dt;
+  const earned = getTotalPerSec() * dt;
+  state.seeds      += earned;
+  state.totalSeeds += earned;
   checkMilestone();
   if (Math.floor(now / 500) !== Math.floor((now - dt * 1000) / 500)) save();
   requestAnimationFrame(gameLoop);
