@@ -397,7 +397,7 @@
 <script>
 // ===== 施設定義（CC準拠・16種）=====
 const PLOTS = [
-  { id: 'pot',       name: 'うえきばち',        icon: '🪴', perSec: 0.1,         baseCost: 15 },
+  { id: 'pot',       name: 'うえきばち',        icon: '🪴', img: 'flower_pot.png', perSec: 0.1,         baseCost: 15 },
   { id: 'flower',    name: 'かだん',            icon: '🌸', perSec: 0.8,         baseCost: 100 },
   { id: 'veggie',    name: 'やさいばたけ',      icon: '🥕', perSec: 6,           baseCost: 1100 },
   { id: 'tree',      name: 'くだものの木',      icon: '🌳', perSec: 28,          baseCost: 12000 },
@@ -414,6 +414,12 @@ const PLOTS = [
   { id: 'planet',    name: 'ほしのそら',        icon: '🪐', perSec: 6500000000,  baseCost: 26000000000000000 },
   { id: 'earth',     name: 'ちきゅうのはたけ',  icon: '🌍', perSec: 40000000000, baseCost: 310000000000000000 },
 ];
+
+// 画像またはアイコン絵文字を返すヘルパー
+function plotIconHtml(plot, sizePx) {
+  if (plot.img) return `<img src="${plot.img}" style="width:${sizePx}px;height:${sizePx}px;object-fit:contain;vertical-align:middle;image-rendering:pixelated">`;
+  return plot.icon;
+}
 
 const UPGRADE_TIERS = [
   { threshold: 1,  costMult: 5,    label: 'Lv.1' },
@@ -501,7 +507,7 @@ function renderGardenLayer() {
     for (let i = 0; i < count; i++) {
       const el = document.createElement('span');
       el.className = 'garden-icon';
-      el.textContent = plot.icon;
+      el.innerHTML = plotIconHtml(plot, 36);
       // ハッシュで一貫したx・サイズ（購入のたびにバラバラにならないよう）
       const hx    = seedHash(plot.id, i * 7 + 1);
       const hsize = seedHash(plot.id, i * 7 + 2);
@@ -839,7 +845,7 @@ function update() {
     const chip = document.createElement('div');
     chip.className = 'icon-chip' +
       (isMaxed ? ' maxed' : isNew ? ' newly-unlocked' : canAfford ? ' can-afford' : owned > 0 ? ' owned' : ' empty');
-    chip.innerHTML = `<span class="chip-icon">${plot.icon}</span><span class="chip-count">${isMaxed ? 'MAX' : owned > 0 ? owned + 'こ' : '－'}</span>`;
+    chip.innerHTML = `<span class="chip-icon">${plotIconHtml(plot, 32)}</span><span class="chip-count">${isMaxed ? 'MAX' : owned > 0 ? owned + 'こ' : '－'}</span>`;
     chip.onclick = (e) => { e.stopPropagation(); buyPlot(plot.id); };
     strip.appendChild(chip);
   });
@@ -886,7 +892,7 @@ function update() {
     const pm = getPrestigeMultiplier();
     card.innerHTML = `
       ${badgeHtml}
-      <div class="plot-icon">${plot.icon}</div>
+      <div class="plot-icon">${plotIconHtml(plot, 40)}</div>
       <div class="plot-name">${plot.name}</div>
       <div class="plot-rate">+${formatNum(plot.perSec * mult * pm)}/びょう</div>
       ${owned > 0 ? `<div class="plot-owned">もってる：${owned}こ</div>` : ''}
