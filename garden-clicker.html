@@ -128,8 +128,21 @@
     background: #fce4ec; border-radius: 20px; padding: 6px 18px;
     display: inline-block; margin-bottom: 20px;
   }
-  .stats-row  { font-size: 0.95rem; color: #795548; font-weight: 700; margin-bottom: 10px; line-height: 1.5; }
-  .stats-row strong { color: var(--soil2); font-size: 1.05rem; display: block; }
+  /* 施設ツールチップ（押している間だけ表示） */
+  .stats-tooltip {
+    position: fixed; left: 50%; top: 14%;
+    transform: translateX(-50%);
+    background: rgba(255,253,249,0.97);
+    border-radius: 18px; padding: 14px 22px;
+    box-shadow: 0 4px 28px rgba(80,40,20,0.22);
+    z-index: 500; text-align: center;
+    min-width: 200px; pointer-events: none;
+    border: 2px solid rgba(109,76,65,0.1);
+  }
+  .stats-tooltip.hidden { display: none; }
+  .tt-head  { font-size: 1.2rem; font-weight: 900; color: var(--soil2); margin-bottom: 8px; }
+  .tt-row   { font-size: 0.92rem; color: #795548; font-weight: 700; margin-bottom: 4px; }
+  .tt-total { font-size: 1rem; font-weight: 900; color: var(--green); margin-top: 6px; }
 
   /* タップボタン */
   .tap-area { flex: 1; display: flex; justify-content: center; align-items: center; }
@@ -331,16 +344,12 @@
   </div>
 </div>
 
-<!-- 施設統計モーダル -->
-<div class="info-overlay hidden" id="statsOverlay" onclick="closeStatsModal()">
-  <div class="info-modal" onclick="event.stopPropagation()">
-    <div class="info-icon"  id="statsIcon"></div>
-    <div class="info-title" id="statsTitle"></div>
-    <div class="stats-row"  id="statsOwned"></div>
-    <div class="stats-row"  id="statsRate"></div>
-    <div class="stats-row"  id="statsTotal"></div>
-    <button class="modal-btn cancel" onclick="closeStatsModal()">とじる</button>
-  </div>
+<!-- 施設ツールチップ（押している間だけ表示） -->
+<div class="stats-tooltip hidden" id="statsTooltip">
+  <div class="tt-head"  id="ttHead"></div>
+  <div class="tt-row"   id="ttOwned"></div>
+  <div class="tt-row"   id="ttRate"></div>
+  <div class="tt-total" id="ttTotal"></div>
 </div>
 
 <!-- ボトムバー -->
@@ -487,7 +496,10 @@ function renderGardenLayer() {
       el.style.pointerEvents = 'auto';
       el.style.cursor       = 'pointer';
       el.style.touchAction  = 'manipulation';
-      el.onclick = () => showFacilityStats(plot.id);
+      el.addEventListener('pointerdown',   (e) => { e.stopPropagation(); showStatsTooltip(plot.id); });
+      el.addEventListener('pointerup',     hideStatsTooltip);
+      el.addEventListener('pointercancel', hideStatsTooltip);
+      el.addEventListener('pointerleave',  hideStatsTooltip);
       layer.appendChild(el);
       gardenIconEls.push({ el, plotId: plot.id });
     }
@@ -902,27 +914,37 @@ function confirmUpgradeModal() {
   closeUpgradeModal();
 }
 
-// ===== 施設統計モーダル =====
-function showFacilityStats(plotId) {
-  const plot = PLOTS.find(p => p.id === plotId);
-  if (!plot) return;
-  const owned   = state.plots[plotId] || 0;
-  const pm      = getPrestigeMultiplier();
-  const mult    = getMultiplier(plotId);
-  const perSec  = plot.perSec * owned * mult * pm;
-  const total   = Math.floor(state.plotProduced[plotId] || 0);
-  document.getElementById('statsIcon').textContent  = plot.icon;
-  document.getElementById('statsTitle').textContent = plot.name;
-  document.getElementById('statsOwned').innerHTML  =
-    'もってる<strong>' + owned + 'こ</strong>';
-  document.getElementById('statsRate').innerHTML   =
-    'いまのせいさん<strong>+' + formatNum(perSec) + ' / びょう</strong>';
-  document.getElementById('statsTotal').innerHTML  =
-    'これまでのごうけい<strong>' + formatNum(total) + ' たね</strong>';
-  document.getElementById('statsOverlay').classList.remove('hidden');
+// ===== 施設ツールチップ（押している間だけ・リアルタイム更新） =====
+let statsTooltipTimer = null;
+let activeStatsId = null;
+
+function updateStatsTooltip() {
+  if (!activeStatsId) return;
+  const plot  = PLOTS.find(p => p.id === activeStatsId);
+  const owned = state.plots[activeStatsId] || 0;
+  const pm    = getPrestigeMultiplier();
+  const mult  = getMultiplier(activeStatsId);
+  const perSec = plot.perSec * owned * mult * pm;
+  const total  = Math.floor(state.plotProduced[activeStatsId] || 0);
+  document.getElementById('ttHead').textContent  = plot.icon + ' ' + plot.name;
+  document.getElementById('ttOwned').textContent = 'もってる：' + owned + 'こ';
+  document.getElementById('ttRate').textContent  = '+' + formatNum(perSec) + ' / びょう';
+  document.getElementById('ttTotal').textContent = 'ごうけい ' + formatNum(total) + ' たね';
 }
-function closeStatsModal() {
-  document.getElementById('statsOverlay').classList.add('hidden');
+
+function showStatsTooltip(plotId) {
+  activeStatsId = plotId;
+  updateStatsTooltip();
+  document.getElementById('statsTooltip').classList.remove('hidden');
+  clearInterval(statsTooltipTimer);
+  statsTooltipTimer = setInterval(updateStatsTooltip, 200);
+}
+
+function hideStatsTooltip() {
+  activeStatsId = null;
+  document.getElementById('statsTooltip').classList.add('hidden');
+  clearInterval(statsTooltipTimer);
+  statsTooltipTimer = null;
 }
 
 prevUnlockedCount = getUnlockedPlots().length;
