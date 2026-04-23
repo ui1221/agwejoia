@@ -29,20 +29,23 @@
     min-height: 100vh; color: var(--text); overflow-x: hidden;
   }
 
-  /* 流れる絵文字 */
-  .clouds { position: fixed; top: 0; left: 0; width: 100%; height: 140px; pointer-events: none; z-index: 0; }
+  /* はたけレイヤー（施設アイコン＋流れる絵文字） */
+  .garden-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
   .cloud  { position: absolute; font-size: 2.2rem; opacity: 0.75; animation: drift linear infinite; }
-  .cloud:nth-child(1) { top: 8px;  animation-duration: 26s; }
-  .cloud:nth-child(2) { top: 40px; animation-duration: 38s; animation-delay: -14s; font-size: 1.6rem; }
-  .cloud:nth-child(3) { top: 14px; animation-duration: 31s; animation-delay: -22s; }
-  .cloud:nth-child(4) { top: 55px; animation-duration: 44s; animation-delay: -8s;  font-size: 1.4rem; }
   @keyframes drift { from { transform: translateX(-80px); } to { transform: translateX(calc(100vw + 80px)); } }
 
-  .wrapper { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 16px 12px 160px; }
+  /* 施設アイコン（はたけビュー） */
+  .garden-icon {
+    position: absolute; line-height: 1; opacity: 0.85;
+    animation: gardenSway 5s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+  @keyframes gardenSway {
+    0%,100% { transform: rotate(-5deg) translateY(0); }
+    50%      { transform: rotate(5deg)  translateY(-5px); }
+  }
 
-  header { text-align: center; padding: 18px 0 10px; }
-  header h1 { font-size: 1.7rem; font-weight: 900; color: var(--soil2); text-shadow: 0 2px 0 rgba(255,255,255,0.6); letter-spacing: 0.04em; }
-  header .subtitle { font-size: 0.82rem; color: #795548; margin-top: 2px; }
+  .wrapper { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 8px 12px 160px; }
 
   /* 種カウンター */
   .seed-bar {
@@ -207,18 +210,9 @@
 </head>
 <body>
 
-<div class="clouds" id="clouds">
-  <span class="cloud">🌧️</span>
-  <span class="cloud">☁️</span>
-  <span class="cloud">🌧️</span>
-  <span class="cloud">💧</span>
-</div>
+<div class="garden-layer" id="gardenLayer"></div>
 
 <div class="wrapper">
-  <header>
-    <h1>🌸 おそらのはたけ 🥕</h1>
-    <p class="subtitle">たねをあつめて、はたけをそだてよう</p>
-  </header>
 
   <!-- 転生ステータス -->
   <div class="prestige-status hidden" id="prestigeStatus">
@@ -346,9 +340,75 @@ function applyStage(idx) {
   if (idx === currentStageIdx) return;
   currentStageIdx = idx;
   document.body.style.background = STAGES[idx].bg;
-  const spans = document.getElementById('clouds').querySelectorAll('.cloud');
-  STAGES[idx].emojis.forEach((e, i) => { if (spans[i]) spans[i].textContent = e; });
+  renderGardenLayer();
 }
+
+// ===== はたけビュー =====
+const GARDEN_ZONE = {
+  pot: 0.78, flower: 0.72, veggie: 0.83, tree: 0.62,
+  garden: 0.66, pond: 0.74, neighbor: 0.55, honey: 0.44,
+  mountain: 0.38, rainbow: 0.24, sunflower: 0.80, mushroom: 0.68,
+  rice: 0.86, cloud: 0.14, planet: 0.08, earth: 0.04
+};
+let gardenIconEls = [];
+
+function renderGardenLayer() {
+  const layer = document.getElementById('gardenLayer');
+  layer.innerHTML = '';
+  gardenIconEls = [];
+
+  // 流れる絵文字（旧 .clouds）
+  const stageEmojis = STAGES[currentStageIdx >= 0 ? currentStageIdx : 0].emojis;
+  const durations = [26, 38, 31, 44];
+  const delays    = [0, -14, -22, -8];
+  const sizes     = [2.2, 1.6, 2.2, 1.4];
+  const tops      = [8, 40, 14, 55];
+  stageEmojis.forEach((em, i) => {
+    const el = document.createElement('span');
+    el.className = 'cloud';
+    el.textContent = em;
+    el.style.cssText = `top:${tops[i]}px; font-size:${sizes[i]}rem; animation-duration:${durations[i]}s; animation-delay:${delays[i]}s;`;
+    layer.appendChild(el);
+  });
+
+  // 施設アイコン
+  PLOTS.forEach(plot => {
+    const owned = state.plots[plot.id] || 0;
+    if (owned === 0) return;
+    const count = Math.min(owned, 5);
+    const yFrac = GARDEN_ZONE[plot.id] ?? 0.6;
+    const yPx   = window.innerHeight * yFrac;
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('span');
+      el.className = 'garden-icon';
+      el.textContent = plot.icon;
+      const xPct = (i + 1) / (count + 1) * 100;
+      el.style.left = `${xPct}%`;
+      el.style.top  = `${yPx}px`;
+      el.style.animationDelay = `${(i * 0.7).toFixed(1)}s`;
+      const scale = 0.9 + Math.random() * 0.6;
+      el.style.fontSize = `${(scale * 2).toFixed(1)}rem`;
+      layer.appendChild(el);
+      gardenIconEls.push(el);
+    }
+  });
+}
+
+// パーティクル発射（施設から種・キラキラが飛ぶ）
+const GARDEN_PARTICLES = ['🌱','✨','🌸','💧','⭐','🍀'];
+setInterval(() => {
+  if (gardenIconEls.length === 0) return;
+  const el = gardenIconEls[Math.floor(Math.random() * gardenIconEls.length)];
+  const rect = el.getBoundingClientRect();
+  if (rect.width === 0) return;
+  const ef = document.createElement('div');
+  ef.className = 'float-emoji';
+  ef.textContent = GARDEN_PARTICLES[Math.floor(Math.random() * GARDEN_PARTICLES.length)];
+  ef.style.left = (rect.left + rect.width / 2) + 'px';
+  ef.style.top  = rect.top + 'px';
+  document.body.appendChild(ef);
+  setTimeout(() => ef.remove(), 1100);
+}, 1800);
 
 // ===== 状態 =====
 let state = { seeds: 0, plots: {}, upgrades: {}, totalSeeds: 0, stars: 0, prestiges: 0 };
@@ -439,6 +499,7 @@ function doPrestige() {
   state.plots     = {};
   state.upgrades  = {};
   closePrestigeModal();
+  renderGardenLayer();
   save();
   update();
   showToast('✨ てんせい！ ⭐' + state.stars + 'つ 生産量 +' + state.stars + '% になったよ！');
@@ -503,6 +564,7 @@ function buyPlot(id) {
   if (state.plots[id] >= MAX_OWNED) showToast(plot.icon + ' ' + plot.name + ' がさいだいになった！');
 
   checkUnlock();
+  renderGardenLayer();
   save();
   update();
 }
@@ -678,15 +740,10 @@ function update() {
     else            costHtml = `<div class="plot-cost ${canAfford ? '' : 'disabled'}">🌱${formatNum(cost)}</div>`;
 
     const pm = getPrestigeMultiplier();
-    // うえきばちの自動タップボーナス表示
-    const autoTapLine = (plot.id === 'pot' && owned > 0)
-      ? `<div class="plot-autotap">🤖 ${formatNum(owned * 0.1 * getPerClick() * pm * mult)}/びょう じどうタップ</div>`
-      : '';
     card.innerHTML = `
       <div class="plot-icon">${plot.icon}</div>
       <div class="plot-name">${plot.name}</div>
       <div class="plot-rate">+${formatNum(plot.perSec * mult * pm)}/びょう</div>
-      ${autoTapLine}
       ${owned > 0 ? `<div class="plot-owned">もってる：${owned}こ</div>` : ''}
       ${mult > 1 ? `<div class="plot-upgrade">⭐×${mult}</div>` : ''}
       ${costHtml}
@@ -699,6 +756,7 @@ function update() {
 
 prevUnlockedCount = getUnlockedPlots().length;
 applyStage(getStageIndex(prevUnlockedCount));
+renderGardenLayer();
 
 let lastTime = performance.now();
 function gameLoop(now) {
