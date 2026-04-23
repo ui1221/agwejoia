@@ -58,15 +58,9 @@
   .seed-label { font-size: 0.75rem; color: #795548; margin-top: 1px; }
   .per-sec    { font-size: 0.75rem; color: var(--green); font-weight: 700; background: #e8f5e9; border-radius: 30px; padding: 4px 12px; text-align: right; }
 
-  /* 転生ステータス */
-  .prestige-status {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    border-radius: var(--radius); padding: 8px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px; color: white; font-size: 0.78rem; font-weight: 700;
-  }
-  .prestige-status.hidden { display: none; }
-  .prestige-stars { color: #ffd700; font-size: 0.9rem; }
+  /* 転生ステータス（種カウンター右下に小さく） */
+  .prestige-inline { font-size: 0.7rem; font-weight: 700; color: #ffd700; margin-top: 3px; min-height: 1em; text-shadow: 0 1px 2px rgba(0,0,0,0.18); }
+  .prestige-inline.hidden { display: none; }
 
   /* 転生ボタンカード */
   .prestige-card {
@@ -214,20 +208,17 @@
 
 <div class="wrapper">
 
-  <!-- 転生ステータス -->
-  <div class="prestige-status hidden" id="prestigeStatus">
-    <span>✨ てんせい <span id="prestigeCount">0</span>かいめ</span>
-    <span class="prestige-stars" id="starDisplay">⭐0</span>
-  </div>
-
-  <!-- 種カウンター -->
+  <!-- 種カウンター（転生ステータスを右下に統合） -->
   <div class="seed-bar">
     <div>
       <div class="seed-count" id="seedCount">🌱 0</div>
       <div class="seed-sub"   id="seedSub"></div>
       <div class="seed-label">たね</div>
     </div>
-    <div class="per-sec" id="perSec">+0<br>/ びょう</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+      <div class="per-sec" id="perSec">+0 / びょう</div>
+      <div class="prestige-inline hidden" id="starDisplay"></div>
+    </div>
   </div>
 
   <!-- タップボタン -->
@@ -389,21 +380,35 @@ function renderGardenLayer() {
       const scale = 0.9 + Math.random() * 0.6;
       el.style.fontSize = `${(scale * 2).toFixed(1)}rem`;
       layer.appendChild(el);
-      gardenIconEls.push(el);
+      gardenIconEls.push({ el, plotId: plot.id });
     }
   });
 }
 
-// パーティクル発射（施設から種・キラキラが飛ぶ）
-const GARDEN_PARTICLES = ['🌱','✨','🌸','💧','⭐','🍀'];
+// パーティクル発射（施設から生産数が飛ぶ）
+const GARDEN_PARTICLES = ['🌱','✨','🌸','💧'];
 setInterval(() => {
   if (gardenIconEls.length === 0) return;
-  const el = gardenIconEls[Math.floor(Math.random() * gardenIconEls.length)];
-  const rect = el.getBoundingClientRect();
+  const item = gardenIconEls[Math.floor(Math.random() * gardenIconEls.length)];
+  const rect = item.el.getBoundingClientRect();
   if (rect.width === 0) return;
+
+  const plot = PLOTS.find(p => p.id === item.plotId);
+  const owned = state.plots[item.plotId] || 0;
+  const countShown = Math.min(owned, 5);
+  const prodPerIcon = plot.perSec * owned * getMultiplier(item.plotId) * getPrestigeMultiplier() / countShown;
+  // 1.8秒分の生産量（アイコン1個あたり）
+  const gained = Math.floor(prodPerIcon * 1.8);
+
   const ef = document.createElement('div');
-  ef.className = 'float-emoji';
-  ef.textContent = GARDEN_PARTICLES[Math.floor(Math.random() * GARDEN_PARTICLES.length)];
+  if (gained >= 1) {
+    ef.className = 'float-text';
+    ef.textContent = '+' + formatNum(gained);
+    ef.style.fontSize = '0.95rem';
+  } else {
+    ef.className = 'float-emoji';
+    ef.textContent = GARDEN_PARTICLES[Math.floor(Math.random() * GARDEN_PARTICLES.length)];
+  }
   ef.style.left = (rect.left + rect.width / 2) + 'px';
   ef.style.top  = rect.top + 'px';
   document.body.appendChild(ef);
@@ -668,14 +673,15 @@ function update() {
   const tapBtn = document.getElementById('tapBtn');
   tapBtn.childNodes[0].textContent = unlocked.length > 1 ? unlocked[unlocked.length - 1].icon : STAGES[currentStageIdx].emojis[0];
 
-  // 転生ステータス・ボタン
+  // 転生ステータス（種カウンター右下）
   const potStars   = getPotentialStars();
   const canPrestige = potStars > state.stars;
-  const prestigeStatus = document.getElementById('prestigeStatus');
+  const starEl = document.getElementById('starDisplay');
   if (state.stars > 0 || state.prestiges > 0) {
-    prestigeStatus.classList.remove('hidden');
-    document.getElementById('prestigeCount').textContent = state.prestiges;
-    document.getElementById('starDisplay').textContent   = '⭐' + state.stars + ' (+' + state.stars + '%)';
+    starEl.classList.remove('hidden');
+    starEl.textContent = '⭐' + state.stars + '（+' + state.stars + '%）× ' + state.prestiges + 'かいめ';
+  } else {
+    starEl.classList.add('hidden');
   }
   const card = document.getElementById('prestigeCard');
   if (canPrestige) {
