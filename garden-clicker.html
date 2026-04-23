@@ -109,6 +109,28 @@
   .modal-btn.confirm { background: linear-gradient(135deg, #ffd700, #ffb300); color: #1a1a2e; }
   .modal-btn.cancel  { background: rgba(255,255,255,0.15); color: white; }
 
+  /* インフォモーダル（アップグレード確認・施設統計 共通） */
+  .info-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 600; display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .info-overlay.hidden { display: none; }
+  .info-modal {
+    background: #fffdf9; border-radius: 24px;
+    padding: 28px 24px; text-align: center; max-width: 320px; width: 100%;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  }
+  .info-icon  { font-size: 3rem; margin-bottom: 6px; }
+  .info-title { font-size: 1.1rem; font-weight: 900; color: var(--soil2); margin-bottom: 14px; }
+  .info-effect { font-size: 0.95rem; color: #ff8f00; font-weight: 700; margin-bottom: 6px; }
+  .info-cost  {
+    font-size: 1rem; font-weight: 900; color: var(--accent);
+    background: #fce4ec; border-radius: 20px; padding: 6px 18px;
+    display: inline-block; margin-bottom: 20px;
+  }
+  .stats-row  { font-size: 0.95rem; color: #795548; font-weight: 700; margin-bottom: 10px; line-height: 1.5; }
+  .stats-row strong { color: var(--soil2); font-size: 1.05rem; display: block; }
+
   /* タップボタン */
   .tap-area { flex: 1; display: flex; justify-content: center; align-items: center; }
   .tap-btn {
@@ -297,6 +319,30 @@
   </div>
 </div>
 
+<!-- アップグレード確認モーダル -->
+<div class="info-overlay hidden" id="upgradeOverlay">
+  <div class="info-modal">
+    <div class="info-icon"   id="upgradeIcon"></div>
+    <div class="info-title"  id="upgradeTitle"></div>
+    <div class="info-effect" id="upgradeEffect"></div>
+    <div class="info-cost"   id="upgradeCost"></div>
+    <button class="modal-btn confirm" id="upgradeConfirmBtn" onclick="confirmUpgradeModal()"></button>
+    <button class="modal-btn cancel"  onclick="closeUpgradeModal()">やめる</button>
+  </div>
+</div>
+
+<!-- 施設統計モーダル -->
+<div class="info-overlay hidden" id="statsOverlay" onclick="closeStatsModal()">
+  <div class="info-modal" onclick="event.stopPropagation()">
+    <div class="info-icon"  id="statsIcon"></div>
+    <div class="info-title" id="statsTitle"></div>
+    <div class="stats-row"  id="statsOwned"></div>
+    <div class="stats-row"  id="statsRate"></div>
+    <div class="stats-row"  id="statsTotal"></div>
+    <button class="modal-btn cancel" onclick="closeStatsModal()">とじる</button>
+  </div>
+</div>
+
 <!-- ボトムバー -->
 <div class="bottom-bar" id="bottomBar" onclick="openSheet()">
   <div class="bottom-bar-header">
@@ -434,10 +480,14 @@ function renderGardenLayer() {
       const hsize = seedHash(plot.id, i * 7 + 2);
       const xPct  = 4 + (hx % 88);           // 4〜92%
       const scale = 0.85 + (hsize % 60) / 100; // 0.85〜1.45
-      el.style.left = `${xPct}%`;
-      el.style.top  = `${yPx}px`;
+      el.style.left         = `${xPct}%`;
+      el.style.top          = `${yPx}px`;
       el.style.animationDelay = `${(i * 0.7).toFixed(1)}s`;
-      el.style.fontSize = `${(scale * 2).toFixed(1)}rem`;
+      el.style.fontSize     = `${(scale * 2).toFixed(1)}rem`;
+      el.style.pointerEvents = 'auto';
+      el.style.cursor       = 'pointer';
+      el.style.touchAction  = 'manipulation';
+      el.onclick = () => showFacilityStats(plot.id);
       layer.appendChild(el);
       gardenIconEls.push({ el, plotId: plot.id });
     }
@@ -490,11 +540,12 @@ function load() {
   } catch(e){}
 }
 function migrate() {
-  if (!state.plots)      state.plots      = {};
-  if (!state.upgrades)   state.upgrades   = {};
-  if (!state.totalSeeds) state.totalSeeds  = state.seeds || 0;
-  if (!state.stars)      state.stars       = 0;
-  if (!state.prestiges)  state.prestiges   = 0;
+  if (!state.plots)        state.plots        = {};
+  if (!state.upgrades)     state.upgrades     = {};
+  if (!state.totalSeeds)   state.totalSeeds   = state.seeds || 0;
+  if (!state.stars)        state.stars        = 0;
+  if (!state.prestiges)    state.prestiges    = 0;
+  if (!state.plotProduced) state.plotProduced = {};
 }
 function applyOfflineIncome() {
   const savedAt = parseInt(localStorage.getItem('garden_saved_at') || '0', 10);
@@ -559,9 +610,10 @@ function doPrestige() {
   if (newStars <= state.stars) return;
   state.stars     = newStars;
   state.prestiges = (state.prestiges || 0) + 1;
-  state.seeds     = 0;
-  state.plots     = {};
-  state.upgrades  = {};
+  state.seeds        = 0;
+  state.plots        = {};
+  state.upgrades     = {};
+  state.plotProduced = {};
   closePrestigeModal();
   renderGardenLayer();
   save();
@@ -800,7 +852,7 @@ function update() {
     card.onclick = isMaxed ? null : () => buyPlot(plot.id);
 
     const badgeHtml = upg
-      ? `<div class="upgrade-badge${upgAfford ? '' : ' cannot-afford'}" onclick="event.stopPropagation();buyUpgrade('${upg.key}')">⭐</div>`
+      ? `<div class="upgrade-badge${upgAfford ? '' : ' cannot-afford'}" onclick="event.stopPropagation();showUpgradeModal('${upg.key}')">⭐</div>`
       : '';
 
     const costHtml = isMaxed
@@ -821,6 +873,56 @@ function update() {
 
   const unlockedIds = new Set(unlocked.map(p => p.id));
   list.querySelectorAll('.plot-card').forEach(card => { if (!unlockedIds.has(card.dataset.id)) card.remove(); });
+}
+
+// ===== アップグレード確認モーダル =====
+let pendingUpgradeKey = null;
+function showUpgradeModal(key) {
+  const u = getAvailableUpgrades().find(u => u.key === key);
+  if (!u) return;
+  pendingUpgradeKey = key;
+  const canAfford = state.seeds >= u.cost;
+  const mult = getMultiplier(u.plot.id);
+  document.getElementById('upgradeIcon').textContent   = u.plot.icon;
+  document.getElementById('upgradeTitle').textContent  = u.plot.name + ' を つよくする';
+  document.getElementById('upgradeEffect').textContent = '⭐ せいさん × ' + mult + ' → × ' + (mult * 2) + ' ばい！';
+  document.getElementById('upgradeCost').textContent   = '🌱 ' + formatNum(u.cost) + ' たね';
+  const btn = document.getElementById('upgradeConfirmBtn');
+  btn.textContent = canAfford ? 'かう！ ⭐' : 'たねが たりない…';
+  btn.style.opacity = canAfford ? '1' : '0.5';
+  btn.disabled = !canAfford;
+  document.getElementById('upgradeOverlay').classList.remove('hidden');
+}
+function closeUpgradeModal() {
+  document.getElementById('upgradeOverlay').classList.add('hidden');
+  pendingUpgradeKey = null;
+}
+function confirmUpgradeModal() {
+  if (pendingUpgradeKey) { buyUpgrade(pendingUpgradeKey); }
+  closeUpgradeModal();
+}
+
+// ===== 施設統計モーダル =====
+function showFacilityStats(plotId) {
+  const plot = PLOTS.find(p => p.id === plotId);
+  if (!plot) return;
+  const owned   = state.plots[plotId] || 0;
+  const pm      = getPrestigeMultiplier();
+  const mult    = getMultiplier(plotId);
+  const perSec  = plot.perSec * owned * mult * pm;
+  const total   = Math.floor(state.plotProduced[plotId] || 0);
+  document.getElementById('statsIcon').textContent  = plot.icon;
+  document.getElementById('statsTitle').textContent = plot.name;
+  document.getElementById('statsOwned').innerHTML  =
+    'もってる<strong>' + owned + 'こ</strong>';
+  document.getElementById('statsRate').innerHTML   =
+    'いまのせいさん<strong>+' + formatNum(perSec) + ' / びょう</strong>';
+  document.getElementById('statsTotal').innerHTML  =
+    'これまでのごうけい<strong>' + formatNum(total) + ' たね</strong>';
+  document.getElementById('statsOverlay').classList.remove('hidden');
+}
+function closeStatsModal() {
+  document.getElementById('statsOverlay').classList.add('hidden');
 }
 
 prevUnlockedCount = getUnlockedPlots().length;
@@ -892,7 +994,18 @@ let lastTime = performance.now();
 function gameLoop(now) {
   const dt = (now - lastTime) / 1000;
   lastTime = now;
-  const earned = getTotalPerSec() * dt;
+  const pm = getPrestigeMultiplier();
+  let earned = 0;
+  PLOTS.forEach(p => {
+    const owned = state.plots[p.id] || 0;
+    if (owned === 0) return;
+    const contrib = p.perSec * owned * getMultiplier(p.id) * pm * dt;
+    earned += contrib;
+    state.plotProduced[p.id] = (state.plotProduced[p.id] || 0) + contrib;
+  });
+  // うえきばち 自動タップボーナス
+  const potOwned = state.plots['pot'] || 0;
+  earned += potOwned * 0.1 * getPerClick() * pm * getMultiplier('pot') * dt;
   state.seeds      += earned;
   state.totalSeeds += earned;
   checkMilestone();
