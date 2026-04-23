@@ -488,6 +488,9 @@ function applyOfflineIncome() {
   setTimeout(() => showToast('🌙 おるすのあいだに ' + timeStr + ' +' + formatNum(gained) + 'たね！'), 800);
 }
 load();
+// 旧セーブとの互換：不足フィールドを補完
+if (!state.plots)    state.plots    = {};
+if (!state.upgrades) state.upgrades = {};
 applyOfflineIncome();
 
 // ===== ゲームロジック =====
