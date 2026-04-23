@@ -237,9 +237,14 @@
 
   <!-- タップボタン -->
   <div class="tap-area">
-    <button class="tap-btn" id="tapBtn" onclick="tap(event)" ontouchstart="">
+    <button class="tap-btn" id="tapBtn"
+      onclick="tap(event)"
+      onpointerdown="startHold(event)"
+      onpointerup="stopHold()"
+      onpointerleave="stopHold()"
+      onpointercancel="stopHold()">
       🌧️
-      <span class="tap-hint">タップ！</span>
+      <span class="tap-hint">タップ・長おし！</span>
     </button>
   </div>
 
@@ -396,10 +401,15 @@ function getUnlockedPlots() {
 }
 function getTotalPerSec() {
   const pm = getPrestigeMultiplier();
-  return PLOTS.reduce((sum, p) => {
+  const base = PLOTS.reduce((sum, p) => {
     const owned = state.plots[p.id] || 0;
     return sum + p.perSec * owned * getMultiplier(p.id) * pm;
   }, 0);
+  // うえきばちの自動タップボーナス（Thousand fingers準拠）
+  // うえきばち1個 = 0.1タップ/秒 × perClick相当
+  const potOwned = state.plots['pot'] || 0;
+  const autoTapBonus = potOwned * 0.1 * getPerClick() * pm * getMultiplier('pot');
+  return base + autoTapBonus;
 }
 function getPerClick() {
   return Math.max(1, Math.pow(2, getUnlockedPlots().length - 1));
@@ -433,15 +443,17 @@ function doPrestige() {
   showToast('✨ てんせい！ ⭐' + state.stars + 'つ 生産量 +' + state.stars + '% になったよ！');
 }
 
-function tap(e) {
+// タップ処理（x,y は画面座標、省略時はボタン中央）
+function tapAt(x, y) {
   const pc = getPerClick();
   state.seeds += pc;
   state.totalSeeds += pc;
+
   const el = document.createElement('div');
   el.className = 'float-text';
   el.textContent = '+' + formatNum(pc) + '🌱';
-  el.style.left = (e.clientX - 20) + 'px';
-  el.style.top  = (e.clientY - 20) + 'px';
+  el.style.left = (x - 20) + 'px';
+  el.style.top  = (y - 20) + 'px';
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 900);
 
@@ -449,12 +461,28 @@ function tap(e) {
   const ef = document.createElement('div');
   ef.className = 'float-emoji';
   ef.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-  ef.style.left = (e.clientX - 16 + (Math.random() - 0.5) * 60) + 'px';
-  ef.style.top  = (e.clientY - 30) + 'px';
+  ef.style.left = (x - 16 + (Math.random() - 0.5) * 60) + 'px';
+  ef.style.top  = (y - 30) + 'px';
   document.body.appendChild(ef);
   setTimeout(() => ef.remove(), 1100);
 
   update();
+}
+
+function tap(e) { tapAt(e.clientX, e.clientY); }
+
+// 長押し自動タップ（8回/秒）
+let holdInterval = null;
+function startHold(e) {
+  if (holdInterval) return;
+  const btn = document.getElementById('tapBtn');
+  const rect = btn.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top  + rect.height / 2;
+  holdInterval = setInterval(() => tapAt(cx, cy), 125);
+}
+function stopHold() {
+  if (holdInterval) { clearInterval(holdInterval); holdInterval = null; }
 }
 
 function buyPlot(id) {
