@@ -194,8 +194,9 @@
   .plot-cost.disabled    { color: #aaa; background: #f0f0f0; }
   .plot-cost.maxed-label { color: #9e9e9e; background: #eeeeee; }
   .plot-cost.upgrade-btn { background: linear-gradient(135deg, #ffe082, #ffd54f); color: #e65100; font-size: 0.72rem; }
-  .plot-owned   { font-size: 0.68rem; color: #795548; font-weight: 700; }
-  .plot-upgrade { font-size: 0.65rem; color: #ff8f00; font-weight: 700; }
+  .plot-owned    { font-size: 0.68rem; color: #795548; font-weight: 700; }
+  .plot-upgrade  { font-size: 0.65rem; color: #ff8f00; font-weight: 700; }
+  .plot-autotap  { font-size: 0.63rem; color: #7b1fa2; font-weight: 700; }
 
   @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
@@ -634,7 +635,7 @@ function update() {
     const isNew     = newlyUnlockedIds.has(plot.id);
     const chip = document.createElement('div');
     chip.className = 'icon-chip' +
-      (isMaxed ? ' maxed' : owned === 0 && !isNew ? ' empty' : isNew ? ' newly-unlocked' : canAfford ? ' can-afford' : owned > 0 ? ' owned' : '');
+      (isMaxed ? ' maxed' : isNew ? ' newly-unlocked' : canAfford ? ' can-afford' : owned > 0 ? ' owned' : ' empty');
     chip.innerHTML = `<span class="chip-icon">${plot.icon}</span><span class="chip-count">${isMaxed ? 'MAX' : owned > 0 ? owned + 'こ' : '－'}</span>`;
     chip.onclick = (e) => { e.stopPropagation(); buyPlot(plot.id); };
     strip.appendChild(chip);
@@ -677,10 +678,15 @@ function update() {
     else            costHtml = `<div class="plot-cost ${canAfford ? '' : 'disabled'}">🌱${formatNum(cost)}</div>`;
 
     const pm = getPrestigeMultiplier();
+    // うえきばちの自動タップボーナス表示
+    const autoTapLine = (plot.id === 'pot' && owned > 0)
+      ? `<div class="plot-autotap">🤖 ${formatNum(owned * 0.1 * getPerClick() * pm * mult)}/びょう じどうタップ</div>`
+      : '';
     card.innerHTML = `
       <div class="plot-icon">${plot.icon}</div>
       <div class="plot-name">${plot.name}</div>
       <div class="plot-rate">+${formatNum(plot.perSec * mult * pm)}/びょう</div>
+      ${autoTapLine}
       ${owned > 0 ? `<div class="plot-owned">もってる：${owned}こ</div>` : ''}
       ${mult > 1 ? `<div class="plot-upgrade">⭐×${mult}</div>` : ''}
       ${costHtml}
