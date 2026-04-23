@@ -50,7 +50,10 @@
     padding: 8px 12px 16px;
     min-height: calc(100vh - 110px);
     display: flex; flex-direction: column;
+    pointer-events: none; /* 背景アイコンのタッチを通す */
   }
+  /* ラッパー内のインタラクティブ要素は個別に有効化 */
+  .seed-bar, .tap-btn, .prestige-badge { pointer-events: auto; }
 
   /* 種カウンター */
   .seed-bar {
@@ -67,23 +70,22 @@
   .prestige-inline { font-size: 0.82rem; font-weight: 700; color: #ffd700; margin-top: 3px; min-height: 1em; text-shadow: 0 1px 2px rgba(0,0,0,0.18); }
   .prestige-inline.hidden { display: none; }
 
-  /* 転生ボタンカード */
-  .prestige-card {
-    background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
-    border-radius: var(--radius); padding: 14px 18px;
-    color: white; text-align: center; cursor: pointer;
-    margin-top: 12px; border: 2px solid #ffd700;
-    box-shadow: 0 0 20px rgba(255,215,0,0.25);
-    animation: starPulse 3s ease-in-out infinite;
-    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  /* 転生バッジ（左下固定・小さめ） */
+  .prestige-badge {
+    position: fixed; bottom: 116px; left: 14px; z-index: 190;
+    background: linear-gradient(135deg, #ffd700, #ffb300);
+    color: #1a1a2e; border-radius: 30px; padding: 8px 14px;
+    font-size: 0.88rem; font-weight: 900;
+    cursor: pointer; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 3px 14px rgba(255,200,0,0.45);
+    animation: badgePulse 3s ease-in-out infinite;
+    display: flex; align-items: center; gap: 5px;
   }
-  .prestige-card.hidden { display: none; }
-  .prestige-card-title { font-size: 1.05rem; font-weight: 900; margin-bottom: 4px; }
-  .prestige-card-desc  { font-size: 0.88rem; opacity: 0.85; }
-  .prestige-gain { color: #ffd700; font-weight: 900; font-size: 0.95rem; margin-top: 6px; }
-  @keyframes starPulse {
-    0%,100% { box-shadow: 0 0 16px rgba(255,215,0,0.2); }
-    50%      { box-shadow: 0 0 30px rgba(255,215,0,0.5); }
+  .prestige-badge.hidden { display: none; }
+  @keyframes badgePulse {
+    0%,100% { box-shadow: 0 3px 10px rgba(255,200,0,0.3); }
+    50%      { box-shadow: 0 3px 20px rgba(255,200,0,0.65); }
   }
 
   /* 転生確認モーダル */
@@ -313,12 +315,6 @@
     </button>
   </div>
 
-  <!-- 転生ボタン -->
-  <div class="prestige-card hidden" id="prestigeCard" onclick="openPrestigeModal()">
-    <div class="prestige-card-title">✨ つよくなって もう一度！</div>
-    <div class="prestige-card-desc">種と施設をリセットして、強くなって始められるよ</div>
-    <div class="prestige-gain" id="prestigeGain"></div>
-  </div>
 </div>
 
 <!-- 転生確認モーダル -->
@@ -330,6 +326,11 @@
     <button class="modal-btn confirm" onclick="doPrestige()">てんせいする！ ✨</button>
     <button class="modal-btn cancel"  onclick="closePrestigeModal()">まだつづける</button>
   </div>
+</div>
+
+<!-- 転生バッジ（左下固定） -->
+<div class="prestige-badge hidden" id="prestigeBadge" onclick="openPrestigeModal()">
+  ✨ つよくなれるよ
 </div>
 
 <!-- アップグレード確認モーダル -->
@@ -807,15 +808,9 @@ function update() {
   } else {
     starEl.classList.add('hidden');
   }
-  const card = document.getElementById('prestigeCard');
-  if (canPrestige) {
-    card.classList.remove('hidden');
-    const gain = potStars - state.stars;
-    document.getElementById('prestigeGain').textContent =
-      'いまてんせいすると ⭐' + potStars + 'つ（＋' + gain + '）生産量 +' + potStars + '%';
-  } else {
-    card.classList.add('hidden');
-  }
+  const badge = document.getElementById('prestigeBadge');
+  if (canPrestige) badge.classList.remove('hidden');
+  else             badge.classList.add('hidden');
 
   // ---- アイコンストリップ ----
   const strip = document.getElementById('iconStrip');
