@@ -1269,7 +1269,9 @@ function spawnSeedShower() {
 const GOLDEN_TYPES = [
   { icon: '🌟', weight: 5,
     onCollect: () => {
-      const got = Math.max(Math.floor(getTotalPerSec() * 30), 10);
+      const by900sec = getTotalPerSec() * 900;
+      const by15pct  = state.seeds * 0.15;
+      const got = Math.max(Math.floor(Math.min(by900sec, by15pct)), 10);
       state.seeds += got; state.totalSeeds += got;
       showToast('🌟 きらきらたね！ +' + formatNum(got) + 'たね！');
       update();
