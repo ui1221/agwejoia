@@ -136,7 +136,7 @@
   .tt-total { font-size: 1rem; font-weight: 900; color: var(--green); margin-top: 6px; }
 
   /* タップボタン */
-  .tap-area { flex: 1; display: flex; justify-content: center; align-items: center; }
+  .tap-area { display: flex; justify-content: center; padding: 10px 0 18px; }
   .tap-btn {
     background: none; border: none; cursor: pointer;
     font-size: 5.5rem; line-height: 1;
@@ -428,23 +428,12 @@ function applyStage(idx) {
 }
 
 // ===== はたけビュー =====
-const GARDEN_ZONE = {
-  // 地面付近（下60〜85%）
-  pot: 0.72,  veggie: 0.80, sunflower: 0.76, rice: 0.84,
-  // 中低（45〜65%）
-  flower: 0.60, pond: 0.65,  mushroom: 0.50, garden: 0.55,
-  // 中（30〜45%）
-  tree: 0.42,  neighbor: 0.35,
-  // 中高（15〜30%）
-  honey: 0.28, mountain: 0.22,
-  // 空（0〜15%）
-  rainbow: 0.18, cloud: 0.12, planet: 0.07, earth: 0.03
-};
-// 一貫したx位置のための簡易ハッシュ
-function seedHash(str, salt) {
-  let h = salt * 0x9e3779b9;
-  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 0x517cc1b7);
-  return Math.abs(h);
+// 施設インデックス順に画面を等分割（index 0=下端、index 15=上端）
+function getGardenY(plotIndex) {
+  const total  = PLOTS.length;      // 16
+  const bottom = 0.88;              // 最下段（うえきばち）
+  const top    = 0.08;              // 最上段（惑星農業機構）
+  return bottom - (plotIndex / (total - 1)) * (bottom - top);
 }
 let gardenIconEls = [];
 
@@ -467,42 +456,44 @@ function renderGardenLayer() {
     layer.appendChild(el);
   });
 
-  // 施設アイコン（所持数と同数・横一列・互い違いに上下ずらし）
-  PLOTS.forEach(plot => {
+  // 施設アイコン（所持数と同数・左詰め・互い違いに上下ずらし）
+  const maxSlots      = 50;
+  const xStartPct     = 2;                          // 左端余白 2%
+  const xRangePct     = 96;                         // 有効幅 96%
+  const slotSpacingPct = xRangePct / (maxSlots - 1); // 50個で均等に敷いた間隔
+
+  PLOTS.forEach((plot, plotIndex) => {
     const owned = state.plots[plot.id] || 0;
     if (owned === 0) return;
 
-    const yFrac   = GARDEN_ZONE[plot.id] ?? 0.6;
-    const yBase   = window.innerHeight * yFrac;
+    const yFrac = getGardenY(plotIndex);
+    const yBase = window.innerHeight * yFrac;
 
-    // 個数に応じてサイズを緩やかに縮小（最小1.4rem、重なり許容）
-    const remSize = Math.max(1.4, 2.2 - owned * 0.015);
+    // サイズは個数に関わらず大きめ固定（重なり許容）
+    const remSize = 1.8;
     const pxSize  = Math.round(remSize * 16);
-
-    // 上下ずらし量（互い違い）
-    const zigzag  = Math.round(remSize * 8);
+    const zigzag  = Math.round(remSize * 7);  // 上下ずらし量
 
     for (let i = 0; i < owned; i++) {
       const el = document.createElement('span');
       el.className = 'garden-icon';
       el.innerHTML = plotIconHtml(plot, pxSize);
 
-      // x: 左2%〜右98%に等間隔配置
-      const xPct = owned === 1 ? 50 : 2 + (i / (owned - 1)) * 96;
-      // y: 偶数インデックス=基準位置、奇数=少し下にずらす
+      // x: 50個分スロットの左から i 番目
+      const xPct = xStartPct + i * slotSpacingPct;
+      // y: 偶数=基準、奇数=少し下
       const yPx  = yBase + (i % 2 === 0 ? 0 : zigzag);
 
-      el.style.left     = `${xPct.toFixed(1)}%`;
-      el.style.top      = `${yPx}px`;
-      el.style.fontSize = `${remSize.toFixed(2)}rem`;
-      // 個別アイコンのpointer-eventsはoff（列タップ領域で一括処理）
+      el.style.left          = `${xPct.toFixed(2)}%`;
+      el.style.top           = `${yPx}px`;
+      el.style.fontSize      = `${remSize}rem`;
       el.style.pointerEvents = 'none';
       layer.appendChild(el);
       gardenIconEls.push({ el, plotId: plot.id });
     }
 
-    // 施設列を覆う透明タップ領域（列全体を1つのボタンとして扱う）
-    const rowH  = remSize * 16 + zigzag + 8;  // アイコン高さ＋ジグザグ＋余白
+    // 施設列を覆う透明タップ領域
+    const rowH  = remSize * 16 + zigzag + 10;
     const hitEl = document.createElement('div');
     hitEl.style.cssText = `
       position:absolute; left:0; width:100%;
