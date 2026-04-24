@@ -36,13 +36,7 @@
 
   /* 施設アイコン（はたけビュー） */
   .garden-icon {
-    position: absolute; line-height: 1; opacity: 0.85;
-    animation: gardenSway 5s ease-in-out infinite;
-    transform-origin: bottom center;
-  }
-  @keyframes gardenSway {
-    0%,100% { transform: rotate(-5deg) translateY(0); }
-    50%      { transform: rotate(5deg)  translateY(-5px); }
+    position: absolute; line-height: 1; opacity: 0.82;
   }
 
   .wrapper {
@@ -473,29 +467,37 @@ function renderGardenLayer() {
     layer.appendChild(el);
   });
 
-  // 施設アイコン
+  // 施設アイコン（所持数と同数・横一列・互い違いに上下ずらし）
   PLOTS.forEach(plot => {
     const owned = state.plots[plot.id] || 0;
     if (owned === 0) return;
-    const count = Math.min(owned, 5);
-    const yFrac = GARDEN_ZONE[plot.id] ?? 0.6;
-    const yPx   = window.innerHeight * yFrac;
-    for (let i = 0; i < count; i++) {
+
+    const yFrac   = GARDEN_ZONE[plot.id] ?? 0.6;
+    const yBase   = window.innerHeight * yFrac;
+
+    // 個数に応じてアイコンサイズを縮小（最小0.75rem）
+    const remSize = Math.max(0.75, 2.0 - owned * 0.028);
+    const pxSize  = Math.round(remSize * 16); // px換算（img用）
+
+    // 上下ずらし量（アイコンが小さくなるほど縮小）
+    const zigzag  = Math.round(remSize * 9);
+
+    for (let i = 0; i < owned; i++) {
       const el = document.createElement('span');
       el.className = 'garden-icon';
-      el.innerHTML = plotIconHtml(plot, 52);
-      // ハッシュで一貫したx・サイズ（購入のたびにバラバラにならないよう）
-      const hx    = seedHash(plot.id, i * 7 + 1);
-      const hsize = seedHash(plot.id, i * 7 + 2);
-      const xPct  = 4 + (hx % 88);           // 4〜92%
-      const scale = 0.85 + (hsize % 60) / 100; // 0.85〜1.45
-      el.style.left         = `${xPct}%`;
-      el.style.top          = `${yPx}px`;
-      el.style.animationDelay = `${(i * 0.7).toFixed(1)}s`;
-      el.style.fontSize     = `${(scale * 2).toFixed(1)}rem`;
+      el.innerHTML = plotIconHtml(plot, pxSize);
+
+      // x: 左2%〜右98%に等間隔配置
+      const xPct = owned === 1 ? 50 : 2 + (i / (owned - 1)) * 96;
+      // y: 偶数インデックス=基準位置、奇数=少し下にずらす
+      const yPx  = yBase + (i % 2 === 0 ? 0 : zigzag);
+
+      el.style.left        = `${xPct.toFixed(1)}%`;
+      el.style.top         = `${yPx}px`;
+      el.style.fontSize    = `${remSize.toFixed(2)}rem`;
       el.style.pointerEvents = 'auto';
-      el.style.cursor       = 'pointer';
-      el.style.touchAction  = 'manipulation';
+      el.style.cursor      = 'pointer';
+      el.style.touchAction = 'manipulation';
       el.addEventListener('pointerdown',   (e) => { e.stopPropagation(); showStatsTooltip(plot.id); });
       el.addEventListener('pointerup',     hideStatsTooltip);
       el.addEventListener('pointercancel', hideStatsTooltip);
@@ -762,10 +764,32 @@ function formatNum(n) {
   return Math.floor(n).toLocaleString('ja-JP');
 }
 function formatSeedDisplay(n) {
-  if (n >= 1e16) return { main: Math.floor(n/1e16) + '京', sub: '+ ' + Math.floor((n%1e16)/1e12).toLocaleString('ja-JP') + '兆' };
-  if (n >= 1e12) return { main: Math.floor(n/1e12) + '兆', sub: '+ ' + Math.floor((n%1e12)/1e8).toLocaleString('ja-JP') + '億' };
-  if (n >= 1e8)  return { main: Math.floor(n/1e8) + '億', sub: '+ ' + Math.floor(n%1e8).toLocaleString('ja-JP') };
-  return { main: Math.floor(n).toLocaleString('ja-JP'), sub: '' };
+  const f = Math.floor(n);
+  if (f >= 1e16) {
+    const kei = Math.floor(f / 1e16);
+    const cho = Math.floor((f % 1e16) / 1e12);
+    return { main: kei + '京' + (cho > 0 ? cho + '兆' : ''), sub: '' };
+  }
+  if (f >= 1e12) {
+    const cho = Math.floor(f / 1e12);
+    const oku = Math.floor((f % 1e12) / 1e8);
+    return { main: cho + '兆' + (oku > 0 ? oku + '億' : ''), sub: '' };
+  }
+  if (f >= 1e8) {
+    const oku  = Math.floor(f / 1e8);
+    const man  = Math.floor((f % 1e8) / 1e4);
+    const ichi = f % 1e4;
+    let s = oku + '億';
+    if (man  > 0) s += man + '万';
+    if (ichi > 0) s += ichi;
+    return { main: s, sub: '' };
+  }
+  if (f >= 1e4) {
+    const man  = Math.floor(f / 1e4);
+    const ichi = f % 1e4;
+    return { main: man + '万' + (ichi > 0 ? ichi : ''), sub: '' };
+  }
+  return { main: f.toLocaleString('ja-JP'), sub: '' };
 }
 
 let toastTimer;
