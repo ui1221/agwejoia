@@ -415,12 +415,23 @@ const UPGRADE_TIERS = [
   { threshold: 50, costMult: 5000, label: 'Lv.4' },
 ];
 
-// グローバルアップグレード（施設に紐付かない一度だけ買える強化）
+// グローバルアップグレード（施設に紐付かない一度だけ買える強化・チェーン式）
 const GLOBAL_UPGRADES = [
-  { key: 'tap_bonus', icon: '👆', name: 'タップ強化',
-    cost: 50000,
-    desc: 'タップで　毎秒せいさんの1%ぶんも もらえるようになる！' },
+  { key: 'tap_bonus',    icon: '👆', name: 'タップ強化 Lv.1',  cost: 5e4,  requires: null,          pct: 1  },
+  { key: 'tap_bonus_2',  icon: '👆', name: 'タップ強化 Lv.2',  cost: 5e6,  requires: 'tap_bonus',   pct: 2  },
+  { key: 'tap_bonus_3',  icon: '👆', name: 'タップ強化 Lv.3',  cost: 5e8,  requires: 'tap_bonus_2', pct: 3  },
+  { key: 'tap_bonus_4',  icon: '👆', name: 'タップ強化 Lv.4',  cost: 5e10, requires: 'tap_bonus_3', pct: 4  },
+  { key: 'tap_bonus_5',  icon: '👆', name: 'タップ強化 Lv.5',  cost: 5e12, requires: 'tap_bonus_4', pct: 5  },
+  { key: 'tap_bonus_6',  icon: '👆', name: 'タップ強化 Lv.6',  cost: 5e14, requires: 'tap_bonus_5', pct: 6  },
+  { key: 'tap_bonus_7',  icon: '👆', name: 'タップ強化 Lv.7',  cost: 5e16, requires: 'tap_bonus_6', pct: 7  },
+  { key: 'tap_bonus_8',  icon: '👆', name: 'タップ強化 Lv.8',  cost: 5e18, requires: 'tap_bonus_7', pct: 8  },
+  { key: 'tap_bonus_9',  icon: '👆', name: 'タップ強化 Lv.9',  cost: 5e20, requires: 'tap_bonus_8', pct: 9  },
+  { key: 'tap_bonus_10', icon: '👆', name: 'タップ強化 Lv.10', cost: 5e22, requires: 'tap_bonus_9', pct: 10 },
 ];
+// 現在のタップボーナス合計（毎秒の何%か）
+function getTapBonusPct() {
+  return GLOBAL_UPGRADES.filter(g => state.upgrades[g.key]).length * 0.01;
+}
 const MAX_OWNED = 50;
 const OFFLINE_CAP_SEC = 2 * 60 * 60;
 
@@ -670,7 +681,7 @@ function doPrestige() {
 // タップ処理（x,y は画面座標、省略時はボタン中央）
 function tapAt(x, y) {
   const pc       = getPerClick();
-  const tapBonus = state.upgrades['tap_bonus'] ? Math.floor(getTotalPerSec() * 0.01) : 0;
+  const tapBonus = Math.floor(getTotalPerSec() * getTapBonusPct());
   const total    = pc + tapBonus;
   state.seeds += total;
   state.totalSeeds += total;
@@ -748,11 +759,12 @@ function getAvailableUpgrades() {
 }
 function getAllAvailableUpgrades() {
   const result = getAvailableUpgrades();
+  // チェーン式：前提条件が満たされた次の1段だけ表示
   GLOBAL_UPGRADES.forEach(gu => {
-    if (!state.upgrades[gu.key]) {
-      result.unshift({ key: gu.key, plot: { id: gu.key, name: gu.name, icon: gu.icon },
-        tier: null, cost: gu.cost, isGlobal: true, desc: gu.desc });
-    }
+    if (state.upgrades[gu.key]) return;                      // 購入済みはスキップ
+    if (gu.requires && !state.upgrades[gu.requires]) return; // 前提未購入はスキップ
+    result.unshift({ key: gu.key, plot: { id: gu.key, name: gu.name, icon: gu.icon },
+      tier: null, cost: gu.cost, isGlobal: true, pct: gu.pct });
   });
   return result;
 }
@@ -893,10 +905,10 @@ function renderUpgradeSheet() {
     card.onclick = () => showUpgradeModal(u.key);
     let rateHtml;
     if (u.isGlobal) {
-      const bonusNow = Math.floor(getTotalPerSec() * 0.01);
-      rateHtml = bonusNow > 0
-        ? `タップ +${formatNum(bonusNow)} 追加`
-        : 'タップ強化（毎秒の1%）';
+      const bonusAfter = Math.floor(getTotalPerSec() * u.pct * 0.01);
+      rateHtml = bonusAfter > 0
+        ? `タップ +${formatNum(bonusAfter)}（毎秒の${u.pct}%）`
+        : `タップ強化（毎秒の${u.pct}%）`;
     } else {
       const mult = getMultiplier(u.plot.id);
       rateHtml = `× ${mult} → × ${mult * 2} ばい`;
@@ -1019,9 +1031,13 @@ function showUpgradeModal(key) {
   const canAfford = state.seeds >= u.cost;
   document.getElementById('upgradeIcon').textContent = u.plot.icon;
   if (u.isGlobal) {
-    const bonusNow = Math.floor(getTotalPerSec() * 0.01);
+    const currentPct = getTapBonusPct();
+    const afterPct   = u.pct * 0.01;
+    const bonusAfter = Math.floor(getTotalPerSec() * afterPct);
     document.getElementById('upgradeTitle').textContent  = u.plot.name;
-    document.getElementById('upgradeEffect').textContent = u.desc + (bonusNow > 0 ? '\n（いま：タップ +' + formatNum(bonusNow) + '）' : '');
+    document.getElementById('upgradeEffect').textContent =
+      'タップで 毎秒せいさんの ' + u.pct + '% ぶん もらえる！\n' +
+      'タップ +' + formatNum(bonusAfter) + ' たね（購入後）';
     document.getElementById('upgradeEffect').style.whiteSpace = 'pre-line';
   } else {
     const mult = getMultiplier(u.plot.id);
