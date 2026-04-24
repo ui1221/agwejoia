@@ -123,21 +123,22 @@
   .info-modal .modal-btn.cancel {
     background: #f0ebe6; color: #795548;
   }
-  /* 施設ツールチップ（押している間だけ表示） */
+  /* 施設ツールチップ / はたけ統計（共通） */
   .stats-tooltip {
     position: fixed; left: 50%; top: 14%;
     transform: translateX(-50%);
     background: rgba(255,253,249,0.97);
-    border-radius: 18px; padding: 14px 22px;
+    border-radius: 18px; padding: 18px 26px;
     box-shadow: 0 4px 28px rgba(80,40,20,0.22);
-    z-index: 500; text-align: center;
-    min-width: 200px; pointer-events: none;
+    z-index: 500;
+    width: calc(100vw - 28px); max-width: 480px;
+    pointer-events: none;
     border: 2px solid rgba(109,76,65,0.1);
   }
   .stats-tooltip.hidden { display: none; }
-  .tt-head  { font-size: 1.2rem; font-weight: 900; color: var(--soil2); margin-bottom: 8px; }
-  .tt-row   { font-size: 0.92rem; color: #795548; font-weight: 700; margin-bottom: 4px; }
-  .tt-total { font-size: 1rem; font-weight: 900; color: var(--green); margin-top: 6px; }
+  .tt-head  { font-size: 1.25rem; font-weight: 900; color: var(--soil2); margin-bottom: 10px; text-align: center; }
+  .tt-row   { font-size: 1rem; color: #795548; font-weight: 700; margin-bottom: 5px; text-align: left; white-space: nowrap; }
+  .tt-total { font-size: 1.05rem; font-weight: 900; color: var(--green); margin-top: 8px; text-align: left; }
 
   /* タップボタン */
   .tap-area { display: flex; justify-content: center; padding: 10px 0 18px; }
@@ -342,7 +343,7 @@
 </div>
 
 <!-- はたけ全体統計（種カウンター押している間だけ表示） -->
-<div class="stats-tooltip hidden" id="gardenTooltip" style="top:22%">
+<div class="stats-tooltip hidden" id="gardenTooltip" style="top:22%;pointer-events:auto">
   <div class="tt-head" id="gttName" onclick="editGardenName()" style="cursor:pointer;user-select:none"></div>
   <div style="font-size:0.75rem;color:#bbb;margin-bottom:10px;margin-top:-4px">✏️ タップでなまえをかえる</div>
   <div class="tt-row"   id="gttTotal"></div>
@@ -1014,6 +1015,7 @@ function showGardenTooltip() {
   document.getElementById('gttPrestige').textContent   = 'あつめた回数：' + (state.prestiges || 0) + 'かい';
 
   document.getElementById('gardenTooltip').classList.remove('hidden');
+  gardenTooltipOpen = true;
   clearInterval(gardenTooltipTimer);
   gardenTooltipTimer = setInterval(() => {
     document.getElementById('gttTotal').textContent  = 'これまでのたね：' + formatNum(state.totalSeeds);
@@ -1023,6 +1025,7 @@ function showGardenTooltip() {
 
 function hideGardenTooltip() {
   document.getElementById('gardenTooltip').classList.add('hidden');
+  gardenTooltipOpen = false;
   clearInterval(gardenTooltipTimer);
   gardenTooltipTimer = null;
 }
@@ -1078,12 +1081,28 @@ prevUnlockedCount = getUnlockedPlots().length;
 applyStage(getStageIndex(prevUnlockedCount));
 renderGardenLayer();
 
-// 種カウンター：押している間だけ統計を表示
+// 種カウンター：タップでトグル（開いたまま名前編集可）
+let gardenTooltipOpen = false;
 const seedBarEl = document.querySelector('.seed-bar');
-seedBarEl.addEventListener('pointerdown',   () => showGardenTooltip());
-seedBarEl.addEventListener('pointerup',     () => hideGardenTooltip());
-seedBarEl.addEventListener('pointercancel', () => hideGardenTooltip());
-seedBarEl.addEventListener('pointerleave',  () => hideGardenTooltip());
+
+function closeGardenOnOutside(e) {
+  const tip = document.getElementById('gardenTooltip');
+  if (!tip.contains(e.target) && !seedBarEl.contains(e.target)) {
+    hideGardenTooltip();
+    document.removeEventListener('pointerdown', closeGardenOnOutside);
+  }
+}
+
+seedBarEl.addEventListener('pointerdown', (e) => {
+  e.stopPropagation();
+  if (gardenTooltipOpen) {
+    hideGardenTooltip();
+    document.removeEventListener('pointerdown', closeGardenOnOutside);
+  } else {
+    showGardenTooltip();
+    setTimeout(() => document.addEventListener('pointerdown', closeGardenOnOutside), 0);
+  }
+});
 
 // ===== きらきらたね =====
 let goldenActive = false;
