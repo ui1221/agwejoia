@@ -341,6 +341,18 @@
   <div class="tt-total" id="ttTotal"></div>
 </div>
 
+<!-- はたけ全体統計（種カウンター押している間だけ表示） -->
+<div class="stats-tooltip hidden" id="gardenTooltip" style="top:22%">
+  <div class="tt-head" id="gttName" onclick="editGardenName()" style="cursor:pointer;user-select:none"></div>
+  <div style="font-size:0.75rem;color:#bbb;margin-bottom:10px;margin-top:-4px">✏️ タップでなまえをかえる</div>
+  <div class="tt-row"   id="gttTotal"></div>
+  <div class="tt-row"   id="gttFacilities"></div>
+  <div class="tt-row"   id="gttAllOwned"></div>
+  <div class="tt-row"   id="gttPerSec"></div>
+  <div class="tt-row"   id="gttStars"></div>
+  <div class="tt-row"   id="gttPrestige"></div>
+</div>
+
 <!-- ボトムバー -->
 <div class="bottom-bar" id="bottomBar">
   <div class="bottom-bar-btns">
@@ -562,6 +574,7 @@ function migrate() {
   if (!state.stars)        state.stars        = 0;
   if (!state.prestiges)    state.prestiges    = 0;
   if (!state.plotProduced) state.plotProduced = {};
+  if (state.gardenName === undefined) state.gardenName = '';
 }
 function applyOfflineIncome() {
   const savedAt = parseInt(localStorage.getItem('garden_saved_at') || '0', 10);
@@ -984,6 +997,46 @@ function confirmUpgradeModal() {
   closeUpgradeModal();
 }
 
+// ===== はたけ全体統計（種カウンター押している間だけ） =====
+let gardenTooltipTimer = null;
+
+function showGardenTooltip() {
+  const name = state.gardenName || '';
+  document.getElementById('gttName').textContent =
+    name ? '🌱 ' + name + 'のはたけ' : '🌱 なまえをつけてみよう';
+
+  const allOwned = PLOTS.reduce((s, p) => s + (state.plots[p.id] || 0), 0);
+  document.getElementById('gttTotal').textContent      = 'これまでのたね：' + formatNum(state.totalSeeds);
+  document.getElementById('gttFacilities').textContent = 'しせつの種類：' + getUnlockedPlots().length + 'しゅるい';
+  document.getElementById('gttAllOwned').textContent   = 'しせつの合計：' + allOwned + 'こ';
+  document.getElementById('gttPerSec').textContent     = '毎秒の生産：+' + formatNum(getTotalPerSec());
+  document.getElementById('gttStars').textContent      = 'ほしのたね：🌟 ' + state.stars + 'こ';
+  document.getElementById('gttPrestige').textContent   = 'あつめた回数：' + (state.prestiges || 0) + 'かい';
+
+  document.getElementById('gardenTooltip').classList.remove('hidden');
+  clearInterval(gardenTooltipTimer);
+  gardenTooltipTimer = setInterval(() => {
+    document.getElementById('gttTotal').textContent  = 'これまでのたね：' + formatNum(state.totalSeeds);
+    document.getElementById('gttPerSec').textContent = '毎秒の生産：+' + formatNum(getTotalPerSec());
+  }, 200);
+}
+
+function hideGardenTooltip() {
+  document.getElementById('gardenTooltip').classList.add('hidden');
+  clearInterval(gardenTooltipTimer);
+  gardenTooltipTimer = null;
+}
+
+function editGardenName() {
+  hideGardenTooltip();
+  const current = state.gardenName || '';
+  const name = prompt('はたけのなまえをつけてね✏️', current);
+  if (name !== null) {
+    state.gardenName = name.trim();
+    save();
+  }
+}
+
 // ===== 施設ツールチップ（押している間だけ・リアルタイム更新） =====
 let statsTooltipTimer = null;
 let activeStatsId = null;
@@ -1024,6 +1077,13 @@ function hideStatsTooltip() {
 prevUnlockedCount = getUnlockedPlots().length;
 applyStage(getStageIndex(prevUnlockedCount));
 renderGardenLayer();
+
+// 種カウンター：押している間だけ統計を表示
+const seedBarEl = document.querySelector('.seed-bar');
+seedBarEl.addEventListener('pointerdown',   () => showGardenTooltip());
+seedBarEl.addEventListener('pointerup',     () => hideGardenTooltip());
+seedBarEl.addEventListener('pointercancel', () => hideGardenTooltip());
+seedBarEl.addEventListener('pointerleave',  () => hideGardenTooltip());
 
 // ===== きらきらたね =====
 let goldenActive = false;
