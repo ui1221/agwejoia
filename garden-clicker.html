@@ -475,12 +475,12 @@ function renderGardenLayer() {
     const yFrac   = GARDEN_ZONE[plot.id] ?? 0.6;
     const yBase   = window.innerHeight * yFrac;
 
-    // 個数に応じてアイコンサイズを縮小（最小0.75rem）
-    const remSize = Math.max(0.75, 2.0 - owned * 0.028);
-    const pxSize  = Math.round(remSize * 16); // px換算（img用）
+    // 個数に応じてサイズを緩やかに縮小（最小1.4rem、重なり許容）
+    const remSize = Math.max(1.4, 2.2 - owned * 0.015);
+    const pxSize  = Math.round(remSize * 16);
 
-    // 上下ずらし量（アイコンが小さくなるほど縮小）
-    const zigzag  = Math.round(remSize * 9);
+    // 上下ずらし量（互い違い）
+    const zigzag  = Math.round(remSize * 8);
 
     for (let i = 0; i < owned; i++) {
       const el = document.createElement('span');
@@ -492,19 +492,28 @@ function renderGardenLayer() {
       // y: 偶数インデックス=基準位置、奇数=少し下にずらす
       const yPx  = yBase + (i % 2 === 0 ? 0 : zigzag);
 
-      el.style.left        = `${xPct.toFixed(1)}%`;
-      el.style.top         = `${yPx}px`;
-      el.style.fontSize    = `${remSize.toFixed(2)}rem`;
-      el.style.pointerEvents = 'auto';
-      el.style.cursor      = 'pointer';
-      el.style.touchAction = 'manipulation';
-      el.addEventListener('pointerdown',   (e) => { e.stopPropagation(); showStatsTooltip(plot.id); });
-      el.addEventListener('pointerup',     hideStatsTooltip);
-      el.addEventListener('pointercancel', hideStatsTooltip);
-      el.addEventListener('pointerleave',  hideStatsTooltip);
+      el.style.left     = `${xPct.toFixed(1)}%`;
+      el.style.top      = `${yPx}px`;
+      el.style.fontSize = `${remSize.toFixed(2)}rem`;
+      // 個別アイコンのpointer-eventsはoff（列タップ領域で一括処理）
+      el.style.pointerEvents = 'none';
       layer.appendChild(el);
       gardenIconEls.push({ el, plotId: plot.id });
     }
+
+    // 施設列を覆う透明タップ領域（列全体を1つのボタンとして扱う）
+    const rowH  = remSize * 16 + zigzag + 8;  // アイコン高さ＋ジグザグ＋余白
+    const hitEl = document.createElement('div');
+    hitEl.style.cssText = `
+      position:absolute; left:0; width:100%;
+      top:${yBase - 6}px; height:${rowH}px;
+      pointer-events:auto; cursor:pointer; touch-action:manipulation;
+    `;
+    hitEl.addEventListener('pointerdown',   (e) => { e.stopPropagation(); showStatsTooltip(plot.id); });
+    hitEl.addEventListener('pointerup',     hideStatsTooltip);
+    hitEl.addEventListener('pointercancel', hideStatsTooltip);
+    hitEl.addEventListener('pointerleave',  hideStatsTooltip);
+    layer.appendChild(hitEl);
   });
 }
 
@@ -518,8 +527,7 @@ setInterval(() => {
 
   const plot = PLOTS.find(p => p.id === item.plotId);
   const owned = state.plots[item.plotId] || 0;
-  const countShown = Math.min(owned, 5);
-  const prodPerIcon = plot.perSec * owned * getMultiplier(item.plotId) * getPrestigeMultiplier() / countShown;
+  const prodPerIcon = plot.perSec * owned * getMultiplier(item.plotId) * getPrestigeMultiplier() / owned;
   // 1.8秒分の生産量（アイコン1個あたり）
   const gained = Math.floor(prodPerIcon * 1.8);
 
