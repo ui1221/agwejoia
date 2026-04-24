@@ -414,6 +414,13 @@ const UPGRADE_TIERS = [
   { threshold: 25, costMult: 500,  label: 'Lv.3' },
   { threshold: 50, costMult: 5000, label: 'Lv.4' },
 ];
+
+// グローバルアップグレード（施設に紐付かない一度だけ買える強化）
+const GLOBAL_UPGRADES = [
+  { key: 'tap_bonus', icon: '👆', name: 'タップ強化',
+    cost: 50000,
+    desc: 'タップで　毎秒せいさんの1%ぶんも もらえるようになる！' },
+];
 const MAX_OWNED = 50;
 const OFFLINE_CAP_SEC = 2 * 60 * 60;
 
@@ -662,13 +669,15 @@ function doPrestige() {
 
 // タップ処理（x,y は画面座標、省略時はボタン中央）
 function tapAt(x, y) {
-  const pc = getPerClick();
-  state.seeds += pc;
-  state.totalSeeds += pc;
+  const pc       = getPerClick();
+  const tapBonus = state.upgrades['tap_bonus'] ? Math.floor(getTotalPerSec() * 0.01) : 0;
+  const total    = pc + tapBonus;
+  state.seeds += total;
+  state.totalSeeds += total;
 
   const el = document.createElement('div');
   el.className = 'float-text';
-  el.textContent = '+' + formatNum(pc) + '🌱';
+  el.textContent = '+' + formatNum(total) + '🌱';
   el.style.left = (x - 20) + 'px';
   el.style.top  = (y - 20) + 'px';
   document.body.appendChild(el);
@@ -737,12 +746,31 @@ function getAvailableUpgrades() {
   });
   return result;
 }
+function getAllAvailableUpgrades() {
+  const result = getAvailableUpgrades();
+  GLOBAL_UPGRADES.forEach(gu => {
+    if (!state.upgrades[gu.key]) {
+      result.unshift({ key: gu.key, plot: { id: gu.key, name: gu.name, icon: gu.icon },
+        tier: null, cost: gu.cost, isGlobal: true, desc: gu.desc });
+    }
+  });
+  return result;
+}
 function buyUpgrade(key) {
   const u = getAvailableUpgrades().find(u => u.key === key);
   if (!u || state.seeds < u.cost) return;
   state.seeds -= u.cost;
   state.upgrades[key] = true;
   showToast(u.plot.icon + ' ' + u.plot.name + ' がパワーアップ！ ×2');
+  save();
+  update();
+}
+function buyGlobalUpgrade(key) {
+  const gu = GLOBAL_UPGRADES.find(g => g.key === key);
+  if (!gu || state.seeds < gu.cost) return;
+  state.seeds -= gu.cost;
+  state.upgrades[key] = true;
+  showToast(gu.icon + ' ' + gu.name + ' かくとく！');
   save();
   update();
 }
@@ -848,7 +876,7 @@ function closeSheet() {
 
 function renderUpgradeSheet() {
   const list  = document.getElementById('upgradeList');
-  const avail = getAvailableUpgrades();
+  const avail = getAllAvailableUpgrades();
   const seeds = Math.floor(state.seeds);
   list.innerHTML = '';
   if (avail.length === 0) {
@@ -860,14 +888,23 @@ function renderUpgradeSheet() {
   }
   avail.forEach(u => {
     const canAfford = seeds >= u.cost;
-    const mult = getMultiplier(u.plot.id);
     const card = document.createElement('div');
     card.className = 'plot-card' + (canAfford ? ' can-afford' : ' cannot-afford');
     card.onclick = () => showUpgradeModal(u.key);
+    let rateHtml;
+    if (u.isGlobal) {
+      const bonusNow = Math.floor(getTotalPerSec() * 0.01);
+      rateHtml = bonusNow > 0
+        ? `タップ +${formatNum(bonusNow)} 追加`
+        : 'タップ強化（毎秒の1%）';
+    } else {
+      const mult = getMultiplier(u.plot.id);
+      rateHtml = `× ${mult} → × ${mult * 2} ばい`;
+    }
     card.innerHTML = `
-      <div class="plot-icon">${plotIconHtml(u.plot, 48)}</div>
+      <div class="plot-icon">${u.plot.icon}</div>
       <div class="plot-name">${u.plot.name}</div>
-      <div class="plot-rate">× ${mult} → × ${mult * 2} ばい</div>
+      <div class="plot-rate">${rateHtml}</div>
       <div class="plot-cost ${canAfford ? '' : 'disabled'}">🌱${formatNum(u.cost)}</div>
     `;
     list.appendChild(card);
@@ -907,7 +944,7 @@ function update() {
   document.getElementById('newBadge').style.display = hasNew ? '' : 'none';
 
   // アップグレード件数バッジ
-  const availUpgCount = getAvailableUpgrades().length;
+  const availUpgCount = getAllAvailableUpgrades().length;
   const upgBadge = document.getElementById('upgBadge');
   if (availUpgCount > 0) {
     upgBadge.textContent = availUpgCount + '件';
@@ -973,16 +1010,26 @@ function update() {
 
 // ===== アップグレード確認モーダル =====
 let pendingUpgradeKey = null;
+let pendingUpgradeIsGlobal = false;
 function showUpgradeModal(key) {
-  const u = getAvailableUpgrades().find(u => u.key === key);
+  const u = getAllAvailableUpgrades().find(u => u.key === key);
   if (!u) return;
   pendingUpgradeKey = key;
+  pendingUpgradeIsGlobal = u.isGlobal || false;
   const canAfford = state.seeds >= u.cost;
-  const mult = getMultiplier(u.plot.id);
-  document.getElementById('upgradeIcon').textContent   = u.plot.icon;
-  document.getElementById('upgradeTitle').textContent  = u.plot.name + ' を つよくする';
-  document.getElementById('upgradeEffect').textContent = '⭐ せいさん × ' + mult + ' → × ' + (mult * 2) + ' ばい！';
-  document.getElementById('upgradeCost').textContent   = '🌱 ' + formatNum(u.cost) + ' たね';
+  document.getElementById('upgradeIcon').textContent = u.plot.icon;
+  if (u.isGlobal) {
+    const bonusNow = Math.floor(getTotalPerSec() * 0.01);
+    document.getElementById('upgradeTitle').textContent  = u.plot.name;
+    document.getElementById('upgradeEffect').textContent = u.desc + (bonusNow > 0 ? '\n（いま：タップ +' + formatNum(bonusNow) + '）' : '');
+    document.getElementById('upgradeEffect').style.whiteSpace = 'pre-line';
+  } else {
+    const mult = getMultiplier(u.plot.id);
+    document.getElementById('upgradeTitle').textContent  = u.plot.name + ' を つよくする';
+    document.getElementById('upgradeEffect').textContent = '⭐ せいさん × ' + mult + ' → × ' + (mult * 2) + ' ばい！';
+    document.getElementById('upgradeEffect').style.whiteSpace = '';
+  }
+  document.getElementById('upgradeCost').textContent = '🌱 ' + formatNum(u.cost) + ' たね';
   const btn = document.getElementById('upgradeConfirmBtn');
   btn.textContent = canAfford ? 'かう！ ⭐' : 'たねが たりない…';
   btn.style.opacity = canAfford ? '1' : '0.5';
@@ -992,9 +1039,13 @@ function showUpgradeModal(key) {
 function closeUpgradeModal() {
   document.getElementById('upgradeOverlay').classList.add('hidden');
   pendingUpgradeKey = null;
+  pendingUpgradeIsGlobal = false;
 }
 function confirmUpgradeModal() {
-  if (pendingUpgradeKey) { buyUpgrade(pendingUpgradeKey); }
+  if (pendingUpgradeKey) {
+    if (pendingUpgradeIsGlobal) buyGlobalUpgrade(pendingUpgradeKey);
+    else                        buyUpgrade(pendingUpgradeKey);
+  }
   closeUpgradeModal();
 }
 
