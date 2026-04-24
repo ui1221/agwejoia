@@ -244,14 +244,37 @@
 
   /* きらきらたね */
   .golden-seed {
-    position: fixed; font-size: 2.6rem; z-index: 500;
+    position: fixed; font-size: 4rem; z-index: 500;
     cursor: pointer; touch-action: manipulation;
-    animation: goldenDrift 11s linear forwards;
-    filter: drop-shadow(0 0 10px gold) drop-shadow(0 0 20px #ffeb3b);
+    animation: goldenDrift 22s linear forwards;
+    filter: drop-shadow(0 0 10px gold) drop-shadow(0 0 22px #ffeb3b);
   }
   @keyframes goldenDrift {
-    from { transform: translateX(-100px) rotate(0deg) scale(1); }
-    to   { transform: translateX(calc(100vw + 100px)) rotate(360deg) scale(1); }
+    from { transform: translateX(-120px) rotate(0deg) scale(1); }
+    to   { transform: translateX(calc(100vw + 120px)) rotate(360deg) scale(1); }
+  }
+
+  /* フィーバーバナー */
+  .fever-banner {
+    display: none;
+    background: linear-gradient(135deg, #ff5722, #ff9800);
+    color: white; font-size: 0.95rem; font-weight: 900;
+    border-radius: 20px; padding: 6px 18px;
+    text-align: center; margin-bottom: 8px;
+    animation: feverPulse 1s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes feverPulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.75; }
+  }
+
+  /* タップフィーバー中のタップボタン */
+  .tap-btn.tap-fever {
+    animation: tapFeverGlow 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes tapFeverGlow {
+    from { filter: drop-shadow(0 0 8px #e040fb) drop-shadow(0 0 16px #7c4dff); }
+    to   { filter: drop-shadow(0 0 20px #ff80ab) drop-shadow(0 0 36px #ea80fc); }
   }
 
   /* ひとこと（背景を流れる） */
@@ -282,6 +305,9 @@
 <div class="garden-layer" id="gardenLayer"></div>
 
 <div class="wrapper">
+
+  <!-- フィーバーバナー -->
+  <div class="fever-banner" id="feverBanner"></div>
 
   <!-- 種カウンター -->
   <div class="seed-bar" style="flex-direction:column;align-items:stretch;gap:6px;">
@@ -633,7 +659,7 @@ function getTotalPerSec() {
   // うえきばち1個 = 0.1タップ/秒 × perClick相当
   const potOwned = state.plots['pot'] || 0;
   const autoTapBonus = potOwned * 0.1 * getPerClick() * pm * getMultiplier('pot');
-  return base + autoTapBonus;
+  return (base + autoTapBonus) * getFeverMult();
 }
 function getPerClick() {
   return Math.max(1, Math.pow(2, getUnlockedPlots().length - 1));
@@ -681,8 +707,9 @@ function doPrestige() {
 // タップ処理（x,y は画面座標、省略時はボタン中央）
 function tapAt(x, y) {
   const pc       = getPerClick();
-  const tapBonus = Math.floor(getTotalPerSec() * getTapBonusPct());
-  const total    = pc + tapBonus;
+  const tapBonus    = Math.floor(getTotalPerSec() * getTapBonusPct());
+  const tapFevMult  = getTapFeverMult();
+  const total       = (pc + tapBonus) * tapFevMult;
   state.seeds += total;
   state.totalSeeds += total;
 
@@ -694,14 +721,20 @@ function tapAt(x, y) {
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 900);
 
-  const emojis = STAGES[currentStageIdx >= 0 ? currentStageIdx : 0].emojis;
-  const ef = document.createElement('div');
-  ef.className = 'float-emoji';
-  ef.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-  ef.style.left = (x - 16 + (Math.random() - 0.5) * 60) + 'px';
-  ef.style.top  = (y - 30) + 'px';
-  document.body.appendChild(ef);
-  setTimeout(() => ef.remove(), 1100);
+  // タップフィーバー中は追加パーティクル
+  const particleEmojis = tapFevMult > 1
+    ? ['💫','✨','⭐','🌟','💥']
+    : STAGES[currentStageIdx >= 0 ? currentStageIdx : 0].emojis;
+  const particleCount = tapFevMult > 1 ? 6 : 1;
+  for (let i = 0; i < particleCount; i++) {
+    const ef = document.createElement('div');
+    ef.className = 'float-emoji';
+    ef.textContent = particleEmojis[Math.floor(Math.random() * particleEmojis.length)];
+    ef.style.left = (x - 16 + (Math.random() - 0.5) * (tapFevMult > 1 ? 140 : 60)) + 'px';
+    ef.style.top  = (y - 30 + (Math.random() - 0.5) * (tapFevMult > 1 ? 80  : 20)) + 'px';
+    document.body.appendChild(ef);
+    setTimeout(() => ef.remove(), 1100);
+  }
 
   update();
 }
@@ -951,6 +984,23 @@ function update() {
     starEl.classList.add('hidden');
   }
 
+  // ---- フィーバーバナー ----
+  const now = Date.now();
+  const feverBanner = document.getElementById('feverBanner');
+  if (now < feverEndTime) {
+    const secs = Math.ceil((feverEndTime - now) / 1000);
+    feverBanner.textContent = '🔥 フィーバー中！ ×7  あと' + secs + 'びょう';
+    feverBanner.style.display = '';
+    feverBanner.style.background = 'linear-gradient(135deg,#ff5722,#ff9800)';
+  } else if (now < tapFeverEndTime) {
+    const secs = Math.ceil((tapFeverEndTime - now) / 1000);
+    feverBanner.textContent = '💫 タップフィーバー！ ×777  あと' + secs + 'びょう';
+    feverBanner.style.display = '';
+    feverBanner.style.background = 'linear-gradient(135deg,#7c4dff,#e040fb)';
+  } else {
+    feverBanner.style.display = 'none';
+  }
+
   // ---- ボトムバーバッジ ----
   const hasNew = newlyUnlockedIds.size > 0;
   document.getElementById('newBadge').style.display = hasNew ? '' : 'none';
@@ -1172,29 +1222,89 @@ seedBarEl.addEventListener('pointerdown', (e) => {
 });
 
 // ===== きらきらたね =====
+let feverEndTime    = 0;
+let tapFeverEndTime = 0;
+
+function getFeverMult()    { return Date.now() < feverEndTime    ? 7   : 1; }
+function getTapFeverMult() { return Date.now() < tapFeverEndTime ? 777 : 1; }
+
+function startFever() {
+  feverEndTime = Date.now() + 77000;
+  showToast('🔥 フィーバータイム！ 生産 ×7！ 77びょう！');
+  update();
+}
+function startTapFever() {
+  tapFeverEndTime = Date.now() + 13000;
+  showToast('💫 タップフィーバー！ タップ ×777！ 13びょう！');
+  const btn = document.getElementById('tapBtn');
+  btn.classList.add('tap-fever');
+  setTimeout(() => btn.classList.remove('tap-fever'), 13000);
+  update();
+}
+function spawnSeedShower() {
+  showToast('✨ たねのあめ！ きらきらたねが たくさん！');
+  const count = 8 + Math.floor(Math.random() * 5);
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'golden-seed';
+      el.textContent = '✨';
+      el.style.top             = (10 + Math.random() * 70) + '%';
+      el.style.fontSize        = '3.2rem';
+      el.style.animationDuration = (7 + Math.random() * 5) + 's';
+      const got     = Math.max(Math.floor(getTotalPerSec() * 3), 5);
+      const expireT = setTimeout(() => el.remove(), 13000);
+      el.onclick = () => {
+        clearTimeout(expireT);
+        el.remove();
+        state.seeds += got; state.totalSeeds += got;
+        showToast('✨ +' + formatNum(got) + 'たね！');
+        update();
+      };
+      document.body.appendChild(el);
+    }, i * 220);
+  }
+}
+
+const GOLDEN_TYPES = [
+  { icon: '🌟', weight: 5,
+    onCollect: () => {
+      const got = Math.max(Math.floor(getTotalPerSec() * 30), 10);
+      state.seeds += got; state.totalSeeds += got;
+      showToast('🌟 きらきらたね！ +' + formatNum(got) + 'たね！');
+      update();
+    }},
+  { icon: '🔥', weight: 2, onCollect: startFever },
+  { icon: '💫', weight: 2, onCollect: startTapFever },
+  { icon: '✨', weight: 1, onCollect: spawnSeedShower },
+];
+
 let goldenActive = false;
 function spawnGoldenSeed() {
   if (goldenActive) return;
   goldenActive = true;
+  // 重み付きランダムで種類を決定
+  const total = GOLDEN_TYPES.reduce((s, t) => s + t.weight, 0);
+  let r = Math.random() * total;
+  let type = GOLDEN_TYPES[0];
+  for (const t of GOLDEN_TYPES) { r -= t.weight; if (r <= 0) { type = t; break; } }
+
   const el = document.createElement('div');
-  el.className = 'golden-seed';
-  el.textContent = '🌟';
-  el.style.top = (15 + Math.random() * 55) + '%';
+  el.className   = 'golden-seed';
+  el.textContent = type.icon;
+  el.style.top   = (15 + Math.random() * 55) + '%';
+  const expireT  = setTimeout(() => { if (el.parentNode) { el.remove(); goldenActive = false; } }, 23000);
   el.onclick = () => {
+    clearTimeout(expireT);
     el.remove();
     goldenActive = false;
-    const bonus = Math.floor(getTotalPerSec() * 30);
-    const got = Math.max(bonus, 10);
-    state.seeds += got; state.totalSeeds += got;
-    showToast('🌟 きらきらたね！ +' + formatNum(got) + 'たね もらった！');
-    update();
+    type.onCollect();
   };
   document.body.appendChild(el);
-  setTimeout(() => { if (el.parentNode) { el.remove(); goldenActive = false; } }, 12000);
 }
 function scheduleGolden() {
   setTimeout(() => { spawnGoldenSeed(); scheduleGolden(); },
-    (120 + Math.random() * 180) * 1000); // 2〜5分
+    (120 + Math.random() * 180) * 1000);
 }
 scheduleGolden();
 
@@ -1241,7 +1351,7 @@ function gameLoop(now) {
   PLOTS.forEach(p => {
     const owned = state.plots[p.id] || 0;
     if (owned === 0) return;
-    const contrib = p.perSec * owned * getMultiplier(p.id) * pm * dt;
+    const contrib = p.perSec * owned * getMultiplier(p.id) * pm * getFeverMult() * dt;
     earned += contrib;
     state.plotProduced[p.id] = (state.plotProduced[p.id] || 0) + contrib;
   });
