@@ -205,7 +205,7 @@
   .sheet.show { transform: translateY(0); }
   .sheet-handle { width: 40px; height: 5px; background: #d7c4bb; border-radius: 3px; margin: 12px auto 0; flex-shrink: 0; }
   .sheet-title  { font-size: 1.05rem; font-weight: 900; color: var(--soil2); text-align: center; padding: 10px 0 12px; flex-shrink: 0; }
-  .sheet-scroll { overflow-y: auto; padding: 0 14px 24px; -webkit-overflow-scrolling: touch; }
+  .sheet-scroll { overflow-y: auto; padding: 0 14px calc(24px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
 
   .plots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
@@ -297,14 +297,55 @@
 
   @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
+  /* ウェルカム画面（初回のみ） */
+  .welcome-overlay {
+    position: fixed; inset: 0; background: rgba(240,228,216,0.95);
+    z-index: 700; display: flex; align-items: center; justify-content: center;
+    padding: 28px;
+  }
+  .welcome-overlay.hidden { display: none; }
+  .welcome-modal {
+    background: #fffdf9; border-radius: 28px;
+    padding: 36px 28px; text-align: center; max-width: 340px; width: 100%;
+    box-shadow: 0 8px 40px rgba(80,40,20,0.18);
+    border: 2px solid rgba(240,155,80,0.22);
+  }
+  .welcome-modal .welcome-emoji { font-size: 4rem; margin-bottom: 14px; }
+  .welcome-modal h2 {
+    font-size: 1.5rem; font-weight: 900; color: var(--soil2);
+    margin-bottom: 22px; line-height: 1.5;
+  }
+  .welcome-modal .welcome-row {
+    font-size: 1.1rem; font-weight: 700; color: #5d4037;
+    line-height: 1.7; margin-bottom: 12px;
+  }
+  .welcome-modal .welcome-start {
+    margin-top: 20px; font-size: 1.15rem; padding: 14px;
+    border-radius: 16px; background: linear-gradient(135deg, #f06292, #ab47bc);
+    color: white; border: none; font-family: inherit; font-weight: 900;
+    width: 100%; cursor: pointer; touch-action: manipulation;
+  }
+
   /* トースト */
-  .toast { position: fixed; bottom: calc(120px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(60px); background: var(--soil2); color: white; border-radius: 30px; padding: 12px 24px; font-size: 0.9rem; font-weight: 700; box-shadow: 0 6px 24px rgba(0,0,0,0.2); z-index: 1000; transition: transform 0.4s cubic-bezier(.3,1.4,.5,1), opacity 0.4s; opacity: 0; white-space: nowrap; }
+  .toast { position: fixed; bottom: calc(120px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(60px); background: var(--soil2); color: white; border-radius: 24px; padding: 12px 24px; font-size: 0.9rem; font-weight: 700; box-shadow: 0 6px 24px rgba(0,0,0,0.2); z-index: 1000; transition: transform 0.4s cubic-bezier(.3,1.4,.5,1), opacity 0.4s; opacity: 0; white-space: normal; max-width: min(88vw, 340px); text-align: center; line-height: 1.6; }
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
 
 <div class="garden-layer" id="gardenLayer"></div>
+
+<!-- 初回ウェルカム画面 -->
+<div class="welcome-overlay hidden" id="welcomeOverlay">
+  <div class="welcome-modal">
+    <div class="welcome-emoji">🌸</div>
+    <h2>おそらのはたけへ<br>ようこそ！</h2>
+    <div class="welcome-row">🏠 おうちを タップして<br>たねを あつめよう！</div>
+    <div class="welcome-row">🌾 たねを つかって<br>しせつを かおう！</div>
+    <div class="welcome-row">✨ しせつが じどうで<br>たねを ふやしてくれるよ！</div>
+    <button class="welcome-start" onclick="closeWelcome()">はじめる！ 🌱</button>
+  </div>
+</div>
 
 <div class="wrapper">
 
@@ -628,6 +669,15 @@ function applyOfflineIncome() {
   setTimeout(() => showToast('🌙 おるすのあいだに ' + timeStr + ' +' + formatNum(gained) + 'たね！'), 800);
 }
 load(); migrate(); applyOfflineIncome();
+
+// 初回ウェルカム画面
+function closeWelcome() {
+  document.getElementById('welcomeOverlay').classList.add('hidden');
+  localStorage.setItem('garden_welcomed', '1');
+}
+if (!localStorage.getItem('garden_welcomed')) {
+  document.getElementById('welcomeOverlay').classList.remove('hidden');
+}
 
 // ===== ゲームロジック =====
 function getCost(plot) {
