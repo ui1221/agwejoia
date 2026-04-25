@@ -610,6 +610,7 @@ function migrate() {
   if (!state.prestiges)    state.prestiges    = 0;
   if (!state.plotProduced) state.plotProduced = {};
   if (state.gardenName === undefined) state.gardenName = '';
+  if (state.shownOfflineHint === undefined) state.shownOfflineHint = false;
 }
 function applyOfflineIncome() {
   const savedAt = parseInt(localStorage.getItem('garden_saved_at') || '0', 10);
@@ -760,6 +761,15 @@ function buyPlot(id) {
   });
   if (state.plots[id] >= MAX_OWNED) showToast(plot.icon + ' ' + plot.name + ' がさいだいになった！');
 
+  // 初めての施設購入：オフライン収入のヒントを一度だけ表示
+  if (!state.shownOfflineHint) {
+    const totalOwned = PLOTS.reduce((s, p) => s + (state.plots[p.id] || 0), 0);
+    if (totalOwned === 1) {
+      state.shownOfflineHint = true;
+      setTimeout(() => showToast('🌙 しせつは、ゲームをとじていても はたらいてくれるよ。また ひらいてみてね！', 5500), 2200);
+    }
+  }
+
   checkUnlock();
   renderGardenLayer();
   save();
@@ -871,12 +881,12 @@ function formatSeedDisplay(n) {
 }
 
 let toastTimer;
-function showToast(msg) {
+function showToast(msg, duration = 2800) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+  toastTimer = setTimeout(() => t.classList.remove('show'), duration);
 }
 
 let currentSheetType = null;
