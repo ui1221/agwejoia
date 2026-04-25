@@ -159,7 +159,7 @@
   /* フロートテキスト */
   .float-text  { position: fixed; pointer-events: none; font-size: 1.9rem; font-weight: 900; color: var(--accent); text-shadow: 0 2px 8px rgba(0,0,0,0.18); animation: floatUp 2.8s ease-out forwards; z-index: 999; }
   .float-emoji { position: fixed; pointer-events: none; font-size: 2.4rem; line-height: 1; animation: floatEmoji 2s ease-out forwards; z-index: 998; }
-  @keyframes floatUp    { 0% { opacity:1; transform: translateY(0) scale(1); } 60% { opacity:1; } 100% { opacity:0; transform: translateY(-180px) scale(0.8); } }
+  @keyframes floatUp    { 0% { opacity:1; transform: translateY(0) scale(1); } 60% { opacity:1; } 100% { opacity:0; transform: translateY(-130px) scale(0.8); } }
   @keyframes floatEmoji { 0% { opacity:1; transform: translateY(0) scale(1) rotate(0deg); } 100% { opacity:0; transform: translateY(-110px) scale(0.65) rotate(25deg); } }
 
   /* ========== ボトムバー ========== */
@@ -502,20 +502,6 @@ function renderGardenLayer() {
   const layer = document.getElementById('gardenLayer');
   layer.innerHTML = '';
   gardenIconEls = [];
-
-  // 流れる絵文字（旧 .clouds）
-  const stageEmojis = STAGES[currentStageIdx >= 0 ? currentStageIdx : 0].emojis;
-  const durations = [26, 38, 31, 44];
-  const delays    = [0, -14, -22, -8];
-  const sizes     = [2.2, 1.6, 2.2, 1.4];
-  const tops      = [8, 40, 14, 55];
-  stageEmojis.forEach((em, i) => {
-    const el = document.createElement('span');
-    el.className = 'cloud';
-    el.textContent = em;
-    el.style.cssText = `top:${tops[i]}px; font-size:${sizes[i]}rem; animation-duration:${durations[i]}s; animation-delay:${delays[i]}s;`;
-    layer.appendChild(el);
-  });
 
   // 施設アイコン（所持数と同数・左詰め・互い違いに上下ずらし）
   const maxSlots      = 50;
