@@ -600,6 +600,10 @@ setInterval(() => {
 // ===== 状態 =====
 let state = { seeds: 0, plots: {}, upgrades: {}, totalSeeds: 0, stars: 0, prestiges: 0 };
 
+// フィーバー状態（getTotalPerSec より前に宣言が必要）
+let feverEndTime    = 0;
+let tapFeverEndTime = 0;
+
 function save() {
   try {
     localStorage.setItem('garden_save', JSON.stringify(state));
@@ -1222,9 +1226,6 @@ seedBarEl.addEventListener('pointerdown', (e) => {
 });
 
 // ===== きらきらたね =====
-let feverEndTime    = 0;
-let tapFeverEndTime = 0;
-
 function getFeverMult()    { return Date.now() < feverEndTime    ? 7   : 1; }
 function getTapFeverMult() { return Date.now() < tapFeverEndTime ? 777 : 1; }
 
