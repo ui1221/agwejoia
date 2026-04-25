@@ -558,7 +558,7 @@ function renderGardenLayer() {
 // パーティクル発射（施設から生産数が飛ぶ）
 const GARDEN_PARTICLES = ['🌱','✨','🌸','💧'];
 setInterval(() => {
-  if (gardenIconEls.length === 0) return;
+  if (gardenIconEls.length === 0 || currentSheetType !== null) return;
   const item = gardenIconEls[Math.floor(Math.random() * gardenIconEls.length)];
   const rect = item.el.getBoundingClientRect();
   if (rect.width === 0) return;
