@@ -314,6 +314,30 @@
 
   @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
+  /* 購入セレブレーション */
+  .celeb-icon {
+    position: fixed; left: 50%; top: 42%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 7rem; line-height: 1;
+    pointer-events: none; z-index: 800;
+    animation: celebPop 0.9s cubic-bezier(.3,1.6,.5,1) forwards;
+    filter: drop-shadow(0 0 18px rgba(255,220,0,0.7));
+  }
+  @keyframes celebPop {
+    0%   { transform: translate(-50%,-50%) scale(0.1) rotate(-15deg); opacity: 0; }
+    40%  { transform: translate(-50%,-50%) scale(1.35) rotate(6deg);  opacity: 1; }
+    65%  { transform: translate(-50%,-50%) scale(1.1)  rotate(-2deg); opacity: 1; }
+    100% { transform: translate(-50%,-50%) scale(1.25) rotate(0deg);  opacity: 0; }
+  }
+  .celeb-spark {
+    position: fixed; font-size: 2rem; pointer-events: none; z-index: 799;
+    animation: celebSpark 0.85s ease-out forwards;
+  }
+  @keyframes celebSpark {
+    0%   { transform: translate(0,0) scale(1);   opacity: 1; }
+    100% { transform: translate(var(--dx),var(--dy)) scale(0.3); opacity: 0; }
+  }
+
   /* ウェルカム画面（初回のみ） */
   .welcome-overlay {
     position: fixed; inset: 0; background: rgba(240,228,216,0.95);
@@ -817,6 +841,44 @@ function stopHold() {
   if (holdInterval) { clearInterval(holdInterval); holdInterval = null; }
 }
 
+function showBuyCelebration(plot) {
+  const cx = window.innerWidth  / 2;
+  const cy = window.innerHeight * 0.42;
+
+  // 大きなアイコン
+  const icon = document.createElement('div');
+  icon.className = 'celeb-icon';
+  if (plot.img) {
+    const img = document.createElement('img');
+    img.src = plot.img;
+    img.style.cssText = 'width:7rem;height:7rem;object-fit:contain;pointer-events:none;user-select:none;-webkit-user-select:none';
+    img.draggable = false;
+    icon.appendChild(img);
+  } else {
+    icon.textContent = plot.icon;
+  }
+  document.body.appendChild(icon);
+  setTimeout(() => icon.remove(), 950);
+
+  // キラキラパーティクル
+  const sparks = ['✨','🌟','💫','⭐','🌸'];
+  const angles = [0, 60, 120, 180, 240, 300];
+  angles.forEach((deg, i) => {
+    const spark = document.createElement('div');
+    spark.className = 'celeb-spark';
+    spark.textContent = sparks[i % sparks.length];
+    const rad = (deg * Math.PI) / 180;
+    const dist = 90 + Math.random() * 40;
+    spark.style.left = cx + 'px';
+    spark.style.top  = cy + 'px';
+    spark.style.setProperty('--dx', Math.cos(rad) * dist + 'px');
+    spark.style.setProperty('--dy', Math.sin(rad) * dist + 'px');
+    spark.style.animationDelay = (i * 0.04) + 's';
+    document.body.appendChild(spark);
+    setTimeout(() => spark.remove(), 950);
+  });
+}
+
 function buyPlot(id) {
   const plot = PLOTS.find(p => p.id === id);
   const owned = state.plots[id] || 0;
@@ -825,6 +887,7 @@ function buyPlot(id) {
   if (state.seeds < cost) return;
   state.seeds -= cost;
   state.plots[id] = owned + 1;
+  showBuyCelebration(plot);
 
   UPGRADE_TIERS.forEach(t => {
     if (owned < t.threshold && state.plots[id] >= t.threshold) {
