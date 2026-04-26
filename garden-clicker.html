@@ -1403,7 +1403,7 @@ setTimeout(showFlavorDrift, 3000); // 起動3秒後から開始
 
 let lastTime = performance.now();
 let lastSeedDisplayTime = 0;
-const SEED_DISPLAY_INTERVAL = 33; // 約30fps（ms単位）
+const SEED_DISPLAY_INTERVAL = 50; // 約20fps（ms単位）
 
 function gameLoop(now) {
   const dt = (now - lastTime) / 1000;
