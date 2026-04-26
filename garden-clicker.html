@@ -1021,6 +1021,7 @@ function updateSeedDisplay() {
 // ===== 画面更新（200ms周期・重いDOM更新）=====
 function update() {
   updateSeedDisplay(); // 保険：rAFが止まっても200ms毎に更新される
+  const seeds = Math.floor(state.seeds);  // 後段のcanAffordチェック用
   document.getElementById('perSec').textContent = '+' + formatNum(getTotalPerSec()) + ' / びょう';
 
   const unlocked = getUnlockedPlots();
