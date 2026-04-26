@@ -1402,6 +1402,9 @@ function showFlavorDrift() {
 setTimeout(showFlavorDrift, 3000); // 起動3秒後から開始
 
 let lastTime = performance.now();
+let lastSeedDisplayTime = 0;
+const SEED_DISPLAY_INTERVAL = 33; // 約30fps（ms単位）
+
 function gameLoop(now) {
   const dt = (now - lastTime) / 1000;
   lastTime = now;
@@ -1419,7 +1422,10 @@ function gameLoop(now) {
   earned += potOwned * 0.1 * getPerClick() * pm * getMultiplier('pot') * dt;
   state.seeds      += earned;
   state.totalSeeds += earned;
-  try { updateSeedDisplay(); } catch(e) { console.error('updateSeedDisplay error:', e); }
+  if (now - lastSeedDisplayTime >= SEED_DISPLAY_INTERVAL) {
+    try { updateSeedDisplay(); } catch(e) { console.error('updateSeedDisplay error:', e); }
+    lastSeedDisplayTime = now;
+  }
   checkMilestone();
   if (Math.floor(now / 500) !== Math.floor((now - dt * 1000) / 500)) save();
   requestAnimationFrame(gameLoop);
