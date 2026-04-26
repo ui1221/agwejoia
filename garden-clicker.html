@@ -1007,13 +1007,18 @@ function renderUpgradeSheet() {
   });
 }
 
-// ===== 画面更新 =====
+// ===== 種カウンター表示（毎フレーム更新）=====
+const seedCountEl = document.getElementById('seedCount');
+const seedSubEl   = document.getElementById('seedSub');
+function updateSeedDisplay() {
+  const { main, sub } = formatSeedDisplay(Math.floor(state.seeds));
+  seedCountEl.textContent = '🌱 ' + main;
+  seedSubEl.textContent   = sub;
+}
+
+// ===== 画面更新（200ms周期・重いDOM更新）=====
 function update() {
-  const seeds = Math.floor(state.seeds);
-  const { main, sub } = formatSeedDisplay(seeds);
-  document.getElementById('seedCount').textContent = '🌱 ' + main;
-  document.getElementById('seedSub').textContent   = sub;
-  document.getElementById('perSec').textContent    = '+' + formatNum(getTotalPerSec()) + ' / びょう';
+  document.getElementById('perSec').textContent = '+' + formatNum(getTotalPerSec()) + ' / びょう';
 
   const unlocked = getUnlockedPlots();
   applyStage(getStageIndex(unlocked.length));
@@ -1410,6 +1415,7 @@ function gameLoop(now) {
   earned += potOwned * 0.1 * getPerClick() * pm * getMultiplier('pot') * dt;
   state.seeds      += earned;
   state.totalSeeds += earned;
+  updateSeedDisplay();   // 種カウンターを毎フレーム更新
   checkMilestone();
   if (Math.floor(now / 500) !== Math.floor((now - dt * 1000) / 500)) save();
   requestAnimationFrame(gameLoop);
