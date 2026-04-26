@@ -1392,18 +1392,42 @@ scheduleGolden();
 
 // ===== ひとこと =====
 const FLAVOR_POOL = [
+  // 常時
   () => 'きょうも いいてんき 🌞',
   () => '🐦 ことりが うたっている',
   () => '🍃 かぜが そっと ふいてる',
   () => 'ゆっくり そだてよう 🌱',
+
+  // けんこうアドバイス（常時）
+  () => '🥗 やさいを たくさん たべようね',
+  () => '💧 おみずを こまめに のんでね',
+  () => '🚶 すこし あるくと からだに いいよ',
+  () => '😴 よく ねると げんきに なるよ',
+  () => '🍎 くだものを たべると えいように なるよ',
+  () => '🌅 あさの ひなたぼっこ きもちいいよ',
+
+  // 施設ごと（1個以上で解禁）
+  () => (state.plots['pot']      > 0) ? '🪴 うえきばちが ならんで かわいいね' : null,
   () => (state.plots['flower']   > 0) ? '🌸 おはなが きれいに さいてるね' : null,
-  () => (state.plots['pond']     > 0) ? '🪷 いけの みずが きらきら ひかってる' : null,
-  () => (state.plots['honey']    > 0) ? '🍯 はちみつの あまい においがする' : null,
+  () => (state.plots['veggie']   > 0) ? '🥕 やさいが すくすく そだってる' : null,
   () => (state.plots['tree']     > 0) ? '🌳 木の はっぱが そよそよ ゆれてる' : null,
+  () => (state.plots['garden']   > 0) ? '🏡 おにわが にぎやかに なってきた' : null,
+  () => (state.plots['pond']     > 0) ? '🪷 いけの みずが きらきら ひかってる' : null,
+  () => (state.plots['neighbor'] > 0) ? '🏘️ となりのひとが ひょっこり のぞいてる' : null,
+  () => (state.plots['honey']    > 0) ? '🍯 はちみつの あまい においがする' : null,
   () => (state.plots['mountain'] > 0) ? '🗻 やまの くうきが おいしそう' : null,
-  () => (getTotalPerSec() >= 1)  ? '🌱 たねが どんどん ふえてる！' : null,
+  () => (state.plots['rainbow']  > 0) ? '🔬 けんきゅうしょから あかりが もれてる' : null,
+  () => (state.plots['sunflower']> 0) ? '🌻 ひまわりが おひさまに むかって わらってる' : null,
+  () => (state.plots['mushroom'] > 0) ? '🍄 きのこが ひっそり そだってる' : null,
+  () => (state.plots['rice']     > 0) ? '🌾 たんぼの かぜが きもちいい' : null,
+  () => (state.plots['cloud']    > 0) ? '🛸 そらの うえにも はたけが ある！' : null,
+  () => (state.plots['planet']   > 0) ? '🚀 うちゅうでも たねは そだつんだね' : null,
+  () => (state.plots['earth']    > 0) ? '🌍 ほしじゅうに はたけが ひろがってる' : null,
+
+  // 生産量・その他
+  () => (getTotalPerSec() >= 1)    ? '🌱 たねが どんどん ふえてる！' : null,
   () => (getTotalPerSec() >= 1000) ? '✨ はたけが もりもり そだってる！' : null,
-  () => (state.stars > 0)        ? '🌟 ほしのたねの ちからが みなぎってる' : null,
+  () => (state.stars > 0)          ? '🌟 ほしのたねの ちからが みなぎってる' : null,
 ];
 function showFlavorDrift() {
   const msgs = FLAVOR_POOL.map(f => f()).filter(Boolean);
