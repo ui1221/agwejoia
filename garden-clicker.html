@@ -956,6 +956,9 @@ function openSheet(type) {
     upgradeList.style.display = 'none';
     newlyUnlockedIds.clear();
     document.getElementById('newBadge').style.display = 'none';
+    // 最新施設（下端）にスクロール
+    const scroll = document.querySelector('.sheet-scroll');
+    requestAnimationFrame(() => { scroll.scrollTop = scroll.scrollHeight; });
   } else {
     title.textContent       = '⭐ パワーアップ';
     plotList.style.display    = 'none';
