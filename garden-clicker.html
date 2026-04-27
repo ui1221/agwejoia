@@ -397,16 +397,20 @@
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
   /* ===== キャラクター会話エリア ===== */
-  /* 種カウンター上のセリフオーバーレイ */
+  /* セリフ（種カウンター下辺・外側） */
   .dialogue-overlay {
     position: absolute;
-    inset: 0;
-    background: rgba(255,253,249,0.97);
-    border-radius: var(--radius);
+    top: 100%;
+    left: 0; right: 0;
+    background: rgba(255,253,249,0.94);
+    border-radius: 0 0 16px 16px;
+    border: 1.5px solid rgba(109,76,65,0.1);
+    border-top: none;
+    box-shadow: 0 4px 12px rgba(80,40,20,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 20px;
+    padding: 8px 20px 10px;
     opacity: 0;
     transition: opacity 0.35s;
     z-index: 5;
@@ -414,10 +418,10 @@
   }
   .dialogue-overlay.show { opacity: 1; }
   .dialogue-overlay-text {
-    font-size: 1.35rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--soil2);
-    line-height: 1.7;
+    line-height: 1.6;
     text-align: center;
     white-space: pre-wrap;
   }
@@ -443,7 +447,7 @@
     -webkit-touch-callout: none;
   }
   .char-sprite.dim { filter: brightness(0.28) saturate(0); }
-  .dialogue-char.girl .char-sprite { transform: scaleX(-1); }
+  .dialogue-char.girl .char-sprite { transform: scaleX(-1); height: 7.7rem; }
 </style>
 </head>
 <body>
