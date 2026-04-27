@@ -203,15 +203,15 @@
   /* ========== ボトムシート ========== */
   .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
   .backdrop.show { opacity: 1; pointer-events: auto; }
-  .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: #fffdf9; border-radius: 28px 28px 0 0; box-shadow: 0 -8px 40px rgba(80,40,20,0.18); transform: translateY(100%); transition: transform 0.38s cubic-bezier(.32,1.2,.5,1); max-height: 80vh; display: flex; flex-direction: column; }
+  .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: #fffdf9; border-radius: 28px 28px 0 0; box-shadow: 0 -8px 40px rgba(80,40,20,0.18); transform: translateY(100%); transition: transform 0.38s cubic-bezier(.32,1.2,.5,1); max-height: 80svh; display: flex; flex-direction: column; }
   .sheet.show { transform: translateY(0); }
   .sheet-handle { width: 40px; height: 5px; background: #d7c4bb; border-radius: 3px; margin: 12px auto 0; flex-shrink: 0; }
   .sheet-title  { font-size: 1.05rem; font-weight: 900; color: var(--soil2); text-align: center; padding: 10px 0 12px; flex-shrink: 0; }
-  .sheet-scroll { overflow-y: auto; padding: 0 14px 16px; -webkit-overflow-scrolling: touch; flex: 1; }
+  .sheet-scroll { overflow-y: auto; padding: 0 14px 16px; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; }
   /* シート内とじるバー */
   .sheet-close-bar {
     flex-shrink: 0;
-    padding: 10px 16px calc(14px + env(safe-area-inset-bottom));
+    padding: 10px 16px max(20px, env(safe-area-inset-bottom));
     border-top: 2px solid rgba(109,76,65,0.1);
     background: #fffdf9;
   }
