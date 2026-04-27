@@ -49,7 +49,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 7px;
-    padding: 10px 10px 96px;
+    padding: 10px;
     align-content: start;
   }
   .collection-cell {
@@ -168,7 +168,7 @@
   .tt-total { font-size: 1.05rem; font-weight: 900; color: var(--green); margin-top: 8px; text-align: left; }
 
   /* タップボタン */
-  .tap-area { display: flex; justify-content: center; padding: 10px 0 18px; }
+  .tap-area { display: flex; justify-content: center; align-items: flex-end; padding: 10px 0 18px; gap: 4px; }
   .tap-btn {
     background: none; border: none; cursor: pointer;
     font-size: 5.5rem; line-height: 1;
@@ -397,31 +397,43 @@
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
   /* ===== キャラクター会話エリア ===== */
-  .dialogue-box {
-    position: fixed;
-    bottom: calc(110px + env(safe-area-inset-bottom));
-    left: 0; right: 0;
-    max-width: 520px; margin: 0 auto;
+  /* 種カウンター上のセリフオーバーレイ */
+  .dialogue-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,253,249,0.97);
+    border-radius: var(--radius);
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding: 0 8px;
-    pointer-events: none;
-    z-index: 150;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
     opacity: 0;
-    transition: opacity 0.5s;
+    transition: opacity 0.35s;
+    z-index: 5;
+    pointer-events: none;
   }
-  .dialogue-box.show { opacity: 1; }
+  .dialogue-overlay.show { opacity: 1; }
+  .dialogue-overlay-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--soil2);
+    line-height: 1.7;
+    text-align: center;
+    white-space: pre-wrap;
+  }
 
+  /* キャラクター（家の両隣） */
   .dialogue-char {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
+    align-items: flex-end;
+    opacity: 0;
+    transition: opacity 0.45s;
+    pointer-events: none;
     flex-shrink: 0;
   }
+  .dialogue-char.active { opacity: 1; }
   .char-sprite {
-    height: 80px;
+    height: 5.5rem;
     width: auto;
     image-rendering: pixelated;
     transition: filter 0.45s;
@@ -431,46 +443,6 @@
   }
   .char-sprite.dim { filter: brightness(0.28) saturate(0); }
   .dialogue-char.girl .char-sprite { transform: scaleX(-1); }
-
-  .speech-bubble {
-    position: absolute;
-    bottom: calc(100% + 5px);
-    background: rgba(255,253,249,0.97);
-    border-radius: 14px;
-    padding: 8px 12px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    line-height: 1.6;
-    color: #3e2723;
-    box-shadow: 0 2px 12px rgba(80,40,20,0.2);
-    border: 1.5px solid rgba(109,76,65,0.12);
-    max-width: 150px;
-    white-space: pre-wrap;
-    word-break: break-all;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .speech-bubble.show { opacity: 1; }
-  .dialogue-char.girl .speech-bubble { left: 0; }
-  .dialogue-char.old  .speech-bubble { right: 0; }
-
-  /* 吹き出し三角 */
-  .dialogue-char.girl .speech-bubble::after {
-    content: '';
-    position: absolute;
-    bottom: -7px; left: 14px;
-    border: 7px solid transparent;
-    border-top-color: rgba(255,253,249,0.97);
-    border-bottom: 0;
-  }
-  .dialogue-char.old .speech-bubble::after {
-    content: '';
-    position: absolute;
-    bottom: -7px; right: 14px;
-    border: 7px solid transparent;
-    border-top-color: rgba(255,253,249,0.97);
-    border-bottom: 0;
-  }
 </style>
 </head>
 <body>
@@ -493,7 +465,7 @@
   <div class="fever-banner" id="feverBanner"></div>
 
   <!-- 種カウンター -->
-  <div class="seed-bar" style="flex-direction:column;align-items:stretch;gap:6px;">
+  <div class="seed-bar" style="flex-direction:column;align-items:stretch;gap:6px;position:relative;">
     <div>
       <div class="seed-count" id="seedCount">🌱 0</div>
       <div class="seed-sub"   id="seedSub"></div>
@@ -502,10 +474,18 @@
       <div class="per-sec" id="perSec">+0 / びょう</div>
       <div class="star-pill hidden" id="starDisplay" onclick="openPrestigeModal()">🌟 ×0</div>
     </div>
+    <!-- セリフオーバーレイ -->
+    <div class="dialogue-overlay" id="dialogueOverlay">
+      <div class="dialogue-overlay-text" id="dialogueOverlayText"></div>
+    </div>
   </div>
 
-  <!-- タップボタン -->
+  <!-- タップボタン＋キャラクター -->
   <div class="tap-area">
+    <div class="dialogue-char girl" id="dialogueGirl">
+      <img src="girl001.png" class="char-sprite" id="spriteGirl"
+           draggable="false" oncontextmenu="return false">
+    </div>
     <button class="tap-btn" id="tapBtn"
       onclick="tap(event)"
       onpointerdown="startHold(event)"
@@ -515,6 +495,10 @@
       🏠
       <span class="tap-hint">タップ・長おし！</span>
     </button>
+    <div class="dialogue-char old" id="dialogueOld">
+      <img src="oldman001.png" class="char-sprite" id="spriteOld"
+           draggable="false" oncontextmenu="return false">
+    </div>
   </div>
 
   <!-- コレクションボックス -->
@@ -565,20 +549,6 @@
   <div class="tt-row"   id="gttPerSec"></div>
   <div class="tt-row"   id="gttStars"></div>
   <div class="tt-row"   id="gttPrestige"></div>
-</div>
-
-<!-- キャラクター会話エリア -->
-<div class="dialogue-box" id="dialogueBox">
-  <div class="dialogue-char girl">
-    <div class="speech-bubble" id="bubbleGirl"></div>
-    <img src="girl001.png" class="char-sprite" id="spriteGirl"
-         draggable="false" oncontextmenu="return false">
-  </div>
-  <div class="dialogue-char old">
-    <div class="speech-bubble" id="bubbleOld"></div>
-    <img src="oldman001.png" class="char-sprite" id="spriteOld"
-         draggable="false" oncontextmenu="return false">
-  </div>
 </div>
 
 <!-- ボトムバー -->
@@ -1709,35 +1679,40 @@ function showDialogue() {
     return;
   }
 
-  const isLow  = getUnlockedPlots().length <= 3;
-  const pool   = isLow ? DIALOGUE_LOW : DIALOGUE_GENERIC;
-  const avail  = pool.filter(d => !d.condition || d.condition());
+  const isLow    = getUnlockedPlots().length <= 3;
+  const pool     = isLow ? DIALOGUE_LOW : DIALOGUE_GENERIC;
+  const avail    = pool.filter(d => !d.condition || d.condition());
   if (!avail.length) { setTimeout(showDialogue, 20000); return; }
 
-  const entry  = avail[Math.floor(Math.random() * avail.length)];
-  const lines  = entry.exchange || [{ speaker: entry.speaker, text: entry.text }];
+  const entry      = avail[Math.floor(Math.random() * avail.length)];
+  const isExchange = !!entry.exchange;
+  const lines      = isExchange ? entry.exchange : [{ speaker: entry.speaker, text: entry.text }];
 
   dialogueActive = true;
-  const box     = document.getElementById('dialogueBox');
-  const spriteG = document.getElementById('spriteGirl');
-  const spriteO = document.getElementById('spriteOld');
-  const bubbleG = document.getElementById('bubbleGirl');
-  const bubbleO = document.getElementById('bubbleOld');
+  const overlay  = document.getElementById('dialogueOverlay');
+  const overText = document.getElementById('dialogueOverlayText');
+  const charGirl = document.getElementById('dialogueGirl');
+  const charOld  = document.getElementById('dialogueOld');
+  const spriteG  = document.getElementById('spriteGirl');
+  const spriteO  = document.getElementById('spriteOld');
 
-  spriteG.classList.remove('dim');
-  spriteO.classList.remove('dim');
-  box.classList.add('show');
+  overlay.classList.add('show');
+
+  // 掛け合いは最初から両方表示
+  if (isExchange) {
+    charGirl.classList.add('active');
+    charOld.classList.add('active');
+  }
 
   let idx = 0;
   const LINE_DUR = 2200;
 
   function nextLine() {
-    bubbleG.classList.remove('show');
-    bubbleO.classList.remove('show');
-
     if (idx >= lines.length) {
       setTimeout(() => {
-        box.classList.remove('show');
+        overlay.classList.remove('show');
+        charGirl.classList.remove('active');
+        charOld.classList.remove('active');
         spriteG.classList.remove('dim');
         spriteO.classList.remove('dim');
         dialogueActive = false;
@@ -1748,17 +1723,20 @@ function showDialogue() {
 
     const line   = lines[idx++];
     const isGirl = line.speaker === 'girl';
-    if (isGirl) {
-      spriteG.classList.remove('dim');
-      spriteO.classList.add('dim');
-      bubbleG.textContent = line.text;
-      setTimeout(() => bubbleG.classList.add('show'), 50);
-    } else {
-      spriteO.classList.remove('dim');
-      spriteG.classList.add('dim');
-      bubbleO.textContent = line.text;
-      setTimeout(() => bubbleO.classList.add('show'), 50);
+
+    // 一人セリフ：話す人だけ表示
+    if (!isExchange) {
+      charGirl.classList.toggle('active', isGirl);
+      charOld.classList.toggle('active', !isGirl);
     }
+
+    // 掛け合い：話さない方を暗く
+    if (isExchange) {
+      spriteG.classList.toggle('dim', !isGirl);
+      spriteO.classList.toggle('dim', isGirl);
+    }
+
+    overText.textContent = line.text;
     setTimeout(nextLine, LINE_DUR);
   }
 
