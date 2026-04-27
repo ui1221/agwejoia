@@ -414,7 +414,7 @@
   }
   .dialogue-overlay.show { opacity: 1; }
   .dialogue-overlay-text {
-    font-size: 1.1rem;
+    font-size: 1.35rem;
     font-weight: 700;
     color: var(--soil2);
     line-height: 1.7;
@@ -433,7 +433,7 @@
   }
   .dialogue-char.active { opacity: 1; }
   .char-sprite {
-    height: 5.5rem;
+    height: 11rem;
     width: auto;
     image-rendering: pixelated;
     transition: filter 0.45s;
@@ -1705,7 +1705,7 @@ function showDialogue() {
   }
 
   let idx = 0;
-  const LINE_DUR = 2200;
+  const LINE_DUR = 8800;
 
   function nextLine() {
     if (idx >= lines.length) {
