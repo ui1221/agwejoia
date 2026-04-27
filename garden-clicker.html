@@ -428,9 +428,11 @@
     font-weight: 700;
     color: var(--soil2);
     line-height: 1.6;
-    text-align: center;
-    white-space: pre-wrap;
+    white-space: normal;
+    width: 100%;
   }
+  .dialogue-overlay.speaker-girl .dialogue-overlay-text { text-align: left; }
+  .dialogue-overlay.speaker-old  .dialogue-overlay-text { text-align: right; }
 
   /* キャラクター（家の両隣・絶対配置で家の位置に影響しない） */
   .dialogue-char {
@@ -1757,7 +1759,9 @@ function showDialogue() {
       spriteO.classList.toggle('dim', isGirl);
     }
 
-    overText.textContent = line.text;
+    overlay.classList.remove('speaker-girl', 'speaker-old');
+    overlay.classList.add(isGirl ? 'speaker-girl' : 'speaker-old');
+    overText.textContent = line.text.replace(/\n/g, ' ');
     setTimeout(nextLine, LINE_DUR);
   }
 
