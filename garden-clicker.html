@@ -49,7 +49,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 7px;
-    padding: 10px;
+    padding: 10px 10px 96px;
     align-content: start;
   }
   .collection-cell {
@@ -395,6 +395,82 @@
   /* トースト */
   .toast { position: fixed; bottom: calc(120px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(60px); background: var(--soil2); color: white; border-radius: 24px; padding: 12px 24px; font-size: 0.9rem; font-weight: 700; box-shadow: 0 6px 24px rgba(0,0,0,0.2); z-index: 1000; transition: transform 0.4s cubic-bezier(.3,1.4,.5,1), opacity 0.4s; opacity: 0; white-space: normal; max-width: min(88vw, 340px); text-align: center; line-height: 1.6; }
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* ===== キャラクター会話エリア ===== */
+  .dialogue-box {
+    position: fixed;
+    bottom: calc(110px + env(safe-area-inset-bottom));
+    left: 0; right: 0;
+    max-width: 520px; margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0 8px;
+    pointer-events: none;
+    z-index: 150;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .dialogue-box.show { opacity: 1; }
+
+  .dialogue-char {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .char-sprite {
+    height: 80px;
+    width: auto;
+    image-rendering: pixelated;
+    transition: filter 0.45s;
+    display: block;
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .char-sprite.dim { filter: brightness(0.28) saturate(0); }
+  .dialogue-char.girl .char-sprite { transform: scaleX(-1); }
+
+  .speech-bubble {
+    position: absolute;
+    bottom: calc(100% + 5px);
+    background: rgba(255,253,249,0.97);
+    border-radius: 14px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.6;
+    color: #3e2723;
+    box-shadow: 0 2px 12px rgba(80,40,20,0.2);
+    border: 1.5px solid rgba(109,76,65,0.12);
+    max-width: 150px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .speech-bubble.show { opacity: 1; }
+  .dialogue-char.girl .speech-bubble { left: 0; }
+  .dialogue-char.old  .speech-bubble { right: 0; }
+
+  /* 吹き出し三角 */
+  .dialogue-char.girl .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -7px; left: 14px;
+    border: 7px solid transparent;
+    border-top-color: rgba(255,253,249,0.97);
+    border-bottom: 0;
+  }
+  .dialogue-char.old .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -7px; right: 14px;
+    border: 7px solid transparent;
+    border-top-color: rgba(255,253,249,0.97);
+    border-bottom: 0;
+  }
 </style>
 </head>
 <body>
@@ -489,6 +565,20 @@
   <div class="tt-row"   id="gttPerSec"></div>
   <div class="tt-row"   id="gttStars"></div>
   <div class="tt-row"   id="gttPrestige"></div>
+</div>
+
+<!-- キャラクター会話エリア -->
+<div class="dialogue-box" id="dialogueBox">
+  <div class="dialogue-char girl">
+    <div class="speech-bubble" id="bubbleGirl"></div>
+    <img src="girl001.png" class="char-sprite" id="spriteGirl"
+         draggable="false" oncontextmenu="return false">
+  </div>
+  <div class="dialogue-char old">
+    <div class="speech-bubble" id="bubbleOld"></div>
+    <img src="oldman001.png" class="char-sprite" id="spriteOld"
+         draggable="false" oncontextmenu="return false">
+  </div>
 </div>
 
 <!-- ボトムバー -->
@@ -1482,63 +1572,200 @@ function scheduleGolden() {
 }
 scheduleGolden();
 
-// ===== ひとこと =====
-const FLAVOR_POOL = [
-  // 常時
-  () => 'きょうも いいてんき 🌞',
-  () => '🐦 ことりが うたっている',
-  () => '🍃 かぜが そっと ふいてる',
-  () => 'ゆっくり そだてよう 🌱',
-
-  // けんこうアドバイス（常時）
-  () => '🥗 やさいを たくさん たべようね',
-  () => '💧 おみずを こまめに のんでね',
-  () => '🚶 すこし あるくと からだに いいよ',
-  () => '😴 よく ねると げんきに なるよ',
-  () => '🍎 くだものを たべると えいように なるよ',
-  () => '🌅 あさの ひなたぼっこ きもちいいよ',
-
-  // 施設ごと（1個以上で解禁）
-  () => (state.plots['pot']      > 0) ? '🪴 うえきばちが ならんで かわいいね' : null,
-  () => (state.plots['flower']   > 0) ? '🌸 おはなが きれいに さいてるね' : null,
-  () => (state.plots['veggie']   > 0) ? '🥕 やさいが すくすく そだってる' : null,
-  () => (state.plots['tree']     > 0) ? '🌳 木の はっぱが そよそよ ゆれてる' : null,
-  () => (state.plots['garden']   > 0) ? '🏡 おにわが にぎやかに なってきた' : null,
-  () => (state.plots['pond']     > 0) ? '🪷 いけの みずが きらきら ひかってる' : null,
-  () => (state.plots['neighbor'] > 0) ? '🏘️ となりのひとが ひょっこり のぞいてる' : null,
-  () => (state.plots['honey']    > 0) ? '🍯 はちみつの あまい においがする' : null,
-  () => (state.plots['mountain'] > 0) ? '🗻 やまの くうきが おいしそう' : null,
-  () => (state.plots['rainbow']  > 0) ? '🔬 けんきゅうしょから あかりが もれてる' : null,
-  () => (state.plots['sunflower']> 0) ? '🌻 ひまわりが おひさまに むかって わらってる' : null,
-  () => (state.plots['mushroom'] > 0) ? '🍄 きのこが ひっそり そだってる' : null,
-  () => (state.plots['rice']     > 0) ? '🌾 たんぼの かぜが きもちいい' : null,
-  () => (state.plots['cloud']    > 0) ? '🛸 そらの うえにも はたけが ある！' : null,
-  () => (state.plots['planet']   > 0) ? '🚀 うちゅうでも たねは そだつんだね' : null,
-  () => (state.plots['earth']    > 0) ? '🌍 ほしじゅうに はたけが ひろがってる' : null,
-
-  // 生産量・その他
-  () => (getTotalPerSec() >= 1)    ? '🌱 たねが どんどん ふえてる！' : null,
-  () => (getTotalPerSec() >= 1000) ? '✨ はたけが もりもり そだってる！' : null,
-  () => (state.stars > 0)          ? '🌟 ほしのたねの ちからが みなぎってる' : null,
+// ===== キャラクター会話 =====
+const DIALOGUE_LOW = [
+  { exchange: [
+    { speaker: 'old',  text: 'いつまで起きている。\n早く寝なさい。' },
+    { speaker: 'girl', text: '…はあい。' },
+  ]},
+  { exchange: [
+    { speaker: 'girl', text: '沢山収穫できましたね！' },
+    { speaker: 'old',  text: '……そうだな。' },
+    { speaker: 'girl', text: '……？？' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: '好き嫌いせず\nたべなさい。' },
+    { speaker: 'girl', text: '…はあい。' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: 'あの山には悪いものがいる。\n近づくな。' },
+    { speaker: 'girl', text: '悪いもの？' },
+    { speaker: 'old',  text: 'ウェンディゴだ。' },
+    { speaker: 'girl', text: '（……ウェンディゴ？）' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: 'トマトは陽生植物。\nでは、イチゴは？' },
+    { speaker: 'girl', text: '……？' },
+    { speaker: 'old',  text: '半陰生植物だ。' },
+    { speaker: 'girl', text: '……？？？' },
+  ]},
+  { exchange: [
+    { speaker: 'girl', text: 'はたけに休みって\nないんですか？' },
+    { speaker: 'old',  text: 'ない。' },
+  ]},
+  { exchange: [
+    { speaker: 'girl', text: 'おじいさん、軍手は？' },
+    { speaker: 'old',  text: 'いらん。' },
+  ]},
 ];
-function showFlavorDrift() {
-  const msgs = FLAVOR_POOL.map(f => f()).filter(Boolean);
-  if (!msgs.length) return;
-  const msg = msgs[Math.floor(Math.random() * msgs.length)];
-  const el = document.createElement('div');
-  el.className = 'flavor-drift';
-  el.textContent = msg;
-  // 上下は種カウンターとタップボタンの間あたり（画面の20〜40%）
-  el.style.top = (20 + Math.random() * 20) + '%';
-  // 長さに応じてアニメーション時間を調整（文字数 × 0.5秒 + ベース）
-  const dur = Math.max(22, 18 + msg.length * 0.4);
-  el.style.setProperty('--dur', dur + 's');
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), (dur + 1) * 1000);
-  // 次のひとこと：前が半分流れたあたりで次を出す
-  setTimeout(showFlavorDrift, (dur * 0.6 + Math.random() * 6) * 1000);
+
+const DIALOGUE_GENERIC = [
+  // 掛け合い
+  { exchange: [
+    { speaker: 'girl', text: 'おじいさん、お茶は？' },
+    { speaker: 'old',  text: 'いただこう。' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: '無理をするんじゃない。' },
+    { speaker: 'girl', text: 'もう少しだけ。' },
+  ]},
+  { exchange: [
+    { speaker: 'girl', text: 'またサボってる！' },
+    { speaker: 'old',  text: '……。' },
+  ]},
+  { exchange: [
+    { speaker: 'girl', text: 'おじいさん、この花は？' },
+    { speaker: 'old',  text: 'ヒナゲシだ。' },
+  ]},
+  { exchange: [
+    { speaker: 'girl', text: 'ヤマガラが鳴いてる。' },
+    { speaker: 'old',  text: 'ヒヨドリだ。' },
+  ]},
+  { exchange: [
+    { speaker: 'girl', text: 'これ食べられる？' },
+    { speaker: 'old',  text: '毒だ。' },
+    { speaker: 'girl', text: '毒……。' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: 'トマトは陽生植物。\nでは、イチゴは？' },
+    { speaker: 'girl', text: '半陰生植物！' },
+    { speaker: 'old',  text: '正解だ。' },
+  ]},
+  { exchange: [
+    { speaker: 'girl', text: '日照時間が変わってきた。' },
+    { speaker: 'old',  text: 'そうだな。' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: 'これは今夜食べよう。' },
+    { speaker: 'girl', text: 'やった！' },
+  ]},
+  // 健康アドバイス
+  { exchange: [
+    { speaker: 'old',  text: '水をこまめに\n摂りなさい。' },
+    { speaker: 'girl', text: 'はあい。' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: '好き嫌いせず\nたべなさい。' },
+    { speaker: 'girl', text: 'はあい。' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: '少し動きなさい。' },
+    { speaker: 'girl', text: 'はあい。' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: '早く寝なさい。' },
+    { speaker: 'girl', text: 'はあい。' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: '果物を食べなさい。' },
+    { speaker: 'girl', text: 'はあい。' },
+  ]},
+  { exchange: [
+    { speaker: 'old',  text: '朝日を浴びなさい。' },
+    { speaker: 'girl', text: 'はあい。' },
+  ]},
+  // 一人セリフ - girl
+  { speaker: 'girl', text: 'きょうも いいてんき 🌞' },
+  { speaker: 'girl', text: '🐦 ことりが うたっている' },
+  { speaker: 'girl', text: '🌱 たねが どんどん ふえてる！' },
+  { speaker: 'girl', text: '✨ はたけが もりもり そだってる！' },
+  { speaker: 'girl', text: '🪴 うえきばちが\nならんで かわいいね',      condition: () => (state.plots['pot']||0) > 0 },
+  { speaker: 'girl', text: '🌸 おはなが きれいに さいてるね',           condition: () => (state.plots['flower']||0) > 0 },
+  { speaker: 'girl', text: '🥕 やさいが すくすく そだってる',           condition: () => (state.plots['veggie']||0) > 0 },
+  { speaker: 'girl', text: '🏡 おにわが にぎやかに なってきた',         condition: () => (state.plots['garden']||0) > 0 },
+  { speaker: 'girl', text: '🪷 いけの みずが きらきら ひかってる',      condition: () => (state.plots['pond']||0) > 0 },
+  { speaker: 'girl', text: '🏘️ となりのひとが\nひょっこり のぞいてる', condition: () => (state.plots['neighbor']||0) > 0 },
+  { speaker: 'girl', text: '🍯 はちみつの\nあまい においがする',        condition: () => (state.plots['honey']||0) > 0 },
+  { speaker: 'girl', text: '🌻 ひまわりが おひさまに\nむかって わらってる', condition: () => (state.plots['sunflower']||0) > 0 },
+  { speaker: 'girl', text: '🌾 たんぼの かぜが きもちいい',             condition: () => (state.plots['rice']||0) > 0 },
+  { speaker: 'girl', text: '🛸 そらの うえにも\nはたけが ある！',       condition: () => (state.plots['cloud']||0) > 0 },
+  { speaker: 'girl', text: '🔬 けんきゅうしょから\nあかりが もれてる',  condition: () => (state.plots['rainbow']||0) > 0 },
+  // 一人セリフ - old
+  { speaker: 'old',  text: '🍃 かぜが そっと ふいてる' },
+  { speaker: 'old',  text: 'ゆっくり そだてよう 🌱' },
+  { speaker: 'old',  text: 'このはがゆれている。\nひと雨ふるな。',   condition: () => (state.plots['tree']||0) > 0 },
+  { speaker: 'old',  text: '山のくうきが\nひえている。',             condition: () => (state.plots['mountain']||0) > 0 },
+  { speaker: 'old',  text: 'わしは、キノコなど\nそだてたかな？',     condition: () => (state.plots['mushroom']||0) > 0 },
+  { speaker: 'old',  text: '🌍 ほしじゅうに\nはたけが ひろがってる', condition: () => (state.plots['earth']||0) > 0 },
+  { speaker: 'old',  text: '宇宙でも、\nたねは育つか。',             condition: () => (state.plots['planet']||0) > 0 },
+  { speaker: 'old',  text: '……ほしのたね、か。',                    condition: () => state.stars > 0 },
+];
+
+let dialogueActive = false;
+
+function showDialogue() {
+  if (dialogueActive || currentSheetType !== null) {
+    setTimeout(showDialogue, 20000);
+    return;
+  }
+
+  const isLow  = getUnlockedPlots().length <= 3;
+  const pool   = isLow ? DIALOGUE_LOW : DIALOGUE_GENERIC;
+  const avail  = pool.filter(d => !d.condition || d.condition());
+  if (!avail.length) { setTimeout(showDialogue, 20000); return; }
+
+  const entry  = avail[Math.floor(Math.random() * avail.length)];
+  const lines  = entry.exchange || [{ speaker: entry.speaker, text: entry.text }];
+
+  dialogueActive = true;
+  const box     = document.getElementById('dialogueBox');
+  const spriteG = document.getElementById('spriteGirl');
+  const spriteO = document.getElementById('spriteOld');
+  const bubbleG = document.getElementById('bubbleGirl');
+  const bubbleO = document.getElementById('bubbleOld');
+
+  spriteG.classList.remove('dim');
+  spriteO.classList.remove('dim');
+  box.classList.add('show');
+
+  let idx = 0;
+  const LINE_DUR = 2200;
+
+  function nextLine() {
+    bubbleG.classList.remove('show');
+    bubbleO.classList.remove('show');
+
+    if (idx >= lines.length) {
+      setTimeout(() => {
+        box.classList.remove('show');
+        spriteG.classList.remove('dim');
+        spriteO.classList.remove('dim');
+        dialogueActive = false;
+        setTimeout(showDialogue, (22 + Math.random() * 18) * 1000);
+      }, 400);
+      return;
+    }
+
+    const line   = lines[idx++];
+    const isGirl = line.speaker === 'girl';
+    if (isGirl) {
+      spriteG.classList.remove('dim');
+      spriteO.classList.add('dim');
+      bubbleG.textContent = line.text;
+      setTimeout(() => bubbleG.classList.add('show'), 50);
+    } else {
+      spriteO.classList.remove('dim');
+      spriteG.classList.add('dim');
+      bubbleO.textContent = line.text;
+      setTimeout(() => bubbleO.classList.add('show'), 50);
+    }
+    setTimeout(nextLine, LINE_DUR);
+  }
+
+  nextLine();
 }
-setTimeout(showFlavorDrift, 3000); // 起動3秒後から開始
+
+setTimeout(showDialogue, 4000);
 
 let lastTime = performance.now();
 let lastSeedDisplayTime = 0;
