@@ -31,25 +31,50 @@
     height: 100%; color: var(--text); overflow: hidden;
   }
 
-  /* はたけレイヤー（施設アイコン＋流れる絵文字） */
-  .garden-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
-  .cloud  { position: absolute; font-size: 2.2rem; opacity: 0.75; animation: drift linear infinite; }
-  @keyframes drift { from { transform: translateX(-80px); } to { transform: translateX(calc(100vw + 80px)); } }
-
-  /* 施設アイコン（はたけビュー） */
-  .garden-icon {
-    position: absolute; line-height: 1; opacity: 0.82;
-  }
-
   .wrapper {
     position: relative; z-index: 1; max-width: 520px; margin: 0 auto;
     padding: 8px 12px 16px;
-    min-height: calc(100svh - 110px - env(safe-area-inset-bottom));
-    display: flex; flex-direction: column;
-    pointer-events: none; /* 背景アイコンのタッチを通す */
+    height: calc(100svh - 110px - env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: 8px;
   }
-  /* ラッパー内のインタラクティブ要素は個別に有効化 */
-  .seed-bar, .tap-btn, .prestige-badge { pointer-events: auto; }
+
+  /* コレクションボックス */
+  .collection-box {
+    flex: 1; min-height: 0; overflow-y: auto;
+    pointer-events: auto;
+    background: linear-gradient(160deg, #4a2c1a, #6d3a1f);
+    border-radius: 18px;
+    border: 3px solid rgba(180,110,50,0.45);
+    box-shadow: inset 0 2px 14px rgba(0,0,0,0.38), 0 4px 18px rgba(80,40,20,0.28);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+    padding: 10px;
+    align-content: start;
+  }
+  .collection-cell {
+    background: linear-gradient(145deg, #fffdf5, #fdf0e0);
+    border-radius: 11px;
+    aspect-ratio: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative;
+    box-shadow: 0 3px 7px rgba(80,40,20,0.22), inset 0 1px 2px rgba(255,255,255,0.9);
+    cursor: pointer; touch-action: manipulation;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    transition: transform 0.1s;
+  }
+  .collection-cell:active { transform: scale(0.9); }
+  .cell-icon  { font-size: 2rem; line-height: 1; pointer-events: none; }
+  .cell-count {
+    position: absolute; bottom: 3px; right: 5px;
+    font-size: 0.68rem; font-weight: 900; color: #795548; line-height: 1;
+  }
+  /* 統計フレーバーテキスト */
+  .tt-flavor {
+    font-size: 0.9rem; color: #a1887f; font-weight: 700;
+    margin-top: 8px; text-align: center; line-height: 1.5;
+  }
 
   /* 種カウンター */
   .seed-bar {
@@ -374,8 +399,6 @@
 </head>
 <body>
 
-<div class="garden-layer" id="gardenLayer"></div>
-
 <!-- 初回ウェルカム画面 -->
 <div class="welcome-overlay hidden" id="welcomeOverlay">
   <div class="welcome-modal">
@@ -418,6 +441,9 @@
     </button>
   </div>
 
+  <!-- コレクションボックス -->
+  <div class="collection-box" id="collectionBox"></div>
+
 </div>
 
 <!-- ほしのたねモーダル -->
@@ -450,6 +476,7 @@
   <div class="tt-row"   id="ttRate"></div>
   <div class="tt-row"   id="ttPct"></div>
   <div class="tt-total" id="ttTotal"></div>
+  <div class="tt-flavor" id="ttFlavor"></div>
 </div>
 
 <!-- はたけ全体統計（種カウンター押している間だけ表示） -->
@@ -572,89 +599,86 @@ function applyStage(idx) {
   if (idx === currentStageIdx) return;
   currentStageIdx = idx;
   document.body.style.background = STAGES[idx].bg;
-  renderGardenLayer();
 }
 
-// ===== はたけビュー =====
-// 施設インデックス順に画面を等分割（index 0=下端、index 15=上端）
-function getGardenY(plotIndex) {
-  const total  = PLOTS.length;      // 16
-  const bottom = 0.88;              // 最下段（うえきばち）
-  const top    = 0.08;              // 最上段（惑星農業機構）
-  return bottom - (plotIndex / (total - 1)) * (bottom - top);
-}
-let gardenIconEls = [];
+// ===== 施設フレーバーテキスト =====
+const PLOT_FLAVOR = {
+  pot:       'うえきばちで そだてた たね。\nはじめの いっぽだね！',
+  flower:    'たねやさんで たねを\nたくさん かってもらってるよ。',
+  veggie:    'うじょうの やさいが\nすくすく そだってる！',
+  tree:      'くだもの いっぱい\nなってるよ 🍎',
+  garden:    'おにわが にぎやかで\nたのしいな 🏡',
+  pond:      'みつばちが はちみつを\nはこんでくれてるよ 🍯',
+  neighbor:  'となりのひとも\nおてつだいしてくれてる 🏘️',
+  honey:     'こうじょうで たねが\nどんどん つくられてる 🏭',
+  mountain:  'やまのうじょうから\nさわやかな かぜが ふいてくる 🗻',
+  rainbow:   'けんきゅうしょで\nふしぎな たねを かいはつちゅう 🔬',
+  sunflower: 'ひまわりが おおきく そだって\nおひさまに にっこり 🌻',
+  mushroom:  'きのこが じめじめした\nところで げんきに そだってる 🍄',
+  rice:      'みどりの たんぼが\nかぜに ゆれて きもちいい 🌾',
+  cloud:     'そらの うえにまで\nはたけが ひろがってる！ ☁️',
+  planet:    'うちゅうの むこうまで\nたねが とんでいった 🚀',
+  earth:     'ほしじゅうに はたけが！\nすごい ちからだね 🌍',
+};
 
-function renderGardenLayer() {
-  const layer = document.getElementById('gardenLayer');
-  layer.innerHTML = '';
-  gardenIconEls = [];
+// ===== コレクションボックス =====
+function renderCollectionGrid() {
+  const box = document.getElementById('collectionBox');
+  if (!box) return;
 
-  // 施設アイコン（所持数と同数・左詰め・互い違いに上下ずらし）
-  const maxSlots      = 50;
-  const xStartPct     = 2;                          // 左端余白 2%
-  const xRangePct     = 96;                         // 有効幅 96%
-  const slotSpacingPct = xRangePct / (maxSlots - 1); // 50個で均等に敷いた間隔
-
-  PLOTS.forEach((plot, plotIndex) => {
+  PLOTS.forEach(plot => {
     const owned = state.plots[plot.id] || 0;
-    if (owned === 0) return;
+    let cell = box.querySelector(`[data-id="${plot.id}"]`);
 
-    const yFrac = getGardenY(plotIndex);
-    const yBase = window.innerHeight * yFrac;
-
-    // サイズは個数に関わらず大きめ固定（重なり許容）
-    const remSize = 1.8;
-    const pxSize  = Math.round(remSize * 16);
-    const zigzag  = Math.round(remSize * 7);  // 上下ずらし量
-
-    for (let i = 0; i < owned; i++) {
-      const el = document.createElement('span');
-      el.className = 'garden-icon';
-      el.innerHTML = plotIconHtml(plot, pxSize);
-
-      // x: 50個分スロットの左から i 番目
-      const xPct = xStartPct + i * slotSpacingPct;
-      // y: 偶数=基準、奇数=少し下
-      const yPx  = yBase + (i % 2 === 0 ? 0 : zigzag);
-
-      el.style.left          = `${xPct.toFixed(2)}%`;
-      el.style.top           = `${yPx}px`;
-      el.style.fontSize      = `${remSize}rem`;
-      el.style.pointerEvents = 'none';
-      layer.appendChild(el);
-      gardenIconEls.push({ el, plotId: plot.id });
+    if (owned === 0) {
+      if (cell) cell.remove();
+      return;
     }
 
-    // 施設列を覆う透明タップ領域
-    const rowH  = remSize * 16 + zigzag + 10;
-    const hitEl = document.createElement('div');
-    hitEl.style.cssText = `
-      position:absolute; left:0; width:100%;
-      top:${yBase - 6}px; height:${rowH}px;
-      pointer-events:auto; cursor:pointer; touch-action:manipulation;
-    `;
-    hitEl.addEventListener('pointerdown',   (e) => { e.stopPropagation(); showStatsTooltip(plot.id); });
-    hitEl.addEventListener('pointerup',     hideStatsTooltip);
-    hitEl.addEventListener('pointercancel', hideStatsTooltip);
-    hitEl.addEventListener('pointerleave',  hideStatsTooltip);
-    layer.appendChild(hitEl);
+    if (!cell) {
+      cell = document.createElement('div');
+      cell.className = 'collection-cell';
+      cell.dataset.id = plot.id;
+
+      const iconEl = document.createElement('div');
+      iconEl.className = 'cell-icon';
+      if (plot.img) {
+        iconEl.innerHTML = `<img src="${plot.img}" style="width:2rem;height:2rem;object-fit:contain;pointer-events:none;-webkit-user-select:none;user-select:none" draggable="false" oncontextmenu="return false">`;
+      } else {
+        iconEl.textContent = plot.icon;
+      }
+      const countEl = document.createElement('div');
+      countEl.className = 'cell-count';
+
+      cell.appendChild(iconEl);
+      cell.appendChild(countEl);
+
+      cell.addEventListener('pointerdown',   (e) => { e.stopPropagation(); showStatsTooltip(plot.id); });
+      cell.addEventListener('pointerup',     hideStatsTooltip);
+      cell.addEventListener('pointercancel', hideStatsTooltip);
+      cell.addEventListener('pointerleave',  hideStatsTooltip);
+
+      box.appendChild(cell);
+    }
+
+    cell.querySelector('.cell-count').textContent = '×' + owned;
   });
 }
 
-// パーティクル発射（施設から生産数が飛ぶ）
+// パーティクル発射（コレクションセルから生産数が飛ぶ）
 const GARDEN_PARTICLES = ['🌱','✨','🌸','💧'];
 setInterval(() => {
-  if (gardenIconEls.length === 0 || currentSheetType !== null) return;
-  const item = gardenIconEls[Math.floor(Math.random() * gardenIconEls.length)];
-  const rect = item.el.getBoundingClientRect();
+  if (currentSheetType !== null) return;
+  const cells = document.querySelectorAll('.collection-cell');
+  if (cells.length === 0) return;
+  const cell   = cells[Math.floor(Math.random() * cells.length)];
+  const plotId = cell.dataset.id;
+  const rect   = cell.getBoundingClientRect();
   if (rect.width === 0) return;
 
-  const plot = PLOTS.find(p => p.id === item.plotId);
-  const owned = state.plots[item.plotId] || 0;
-  const prodPerIcon = plot.perSec * owned * getMultiplier(item.plotId) * getPrestigeMultiplier() / owned;
-  // 1.8秒分の生産量（アイコン1個あたり）
-  const gained = Math.floor(prodPerIcon * 1.8);
+  const plot   = PLOTS.find(p => p.id === plotId);
+  const owned  = state.plots[plotId] || 0;
+  const gained = Math.floor(plot.perSec * owned * getMultiplier(plotId) * getPrestigeMultiplier() * 1.8);
 
   const ef = document.createElement('div');
   if (gained >= 1) {
@@ -664,8 +688,8 @@ setInterval(() => {
     ef.className = 'float-emoji';
     ef.textContent = GARDEN_PARTICLES[Math.floor(Math.random() * GARDEN_PARTICLES.length)];
   }
-  ef.style.left = (rect.left + rect.width / 2) + 'px';
-  ef.style.top  = rect.top + 'px';
+  ef.style.left = (rect.left + rect.width  / 2) + 'px';
+  ef.style.top  = (rect.top  + rect.height / 2) + 'px';
   document.body.appendChild(ef);
   setTimeout(() => ef.remove(), 2100);
 }, 700);
@@ -785,7 +809,7 @@ function doPrestige() {
   state.upgrades     = {};
   state.plotProduced = {};
   closePrestigeModal();
-  renderGardenLayer();
+  renderCollectionGrid();
   save();
   update();
   showToast('🌟 ほしのたね ' + state.stars + 'こ あつまった！ 生産量 +' + state.stars + '% になったよ！');
@@ -906,7 +930,7 @@ function buyPlot(id) {
   }
 
   checkUnlock();
-  renderGardenLayer();
+  renderCollectionGrid();
   save();
   update();
 }
@@ -1323,6 +1347,11 @@ function updateStatsTooltip() {
   document.getElementById('ttRate').textContent  = '+' + formatNum(perSec) + ' / びょう';
   document.getElementById('ttPct').textContent   = 'ぜんたいの ' + pctStr + ' をたんとう';
   document.getElementById('ttTotal').textContent = 'ごうけい ' + formatNum(total) + ' たね';
+  const flavorEl = document.getElementById('ttFlavor');
+  if (flavorEl) {
+    flavorEl.textContent = PLOT_FLAVOR[activeStatsId] || '';
+    flavorEl.style.whiteSpace = 'pre-line';
+  }
 }
 
 function showStatsTooltip(plotId) {
@@ -1342,7 +1371,7 @@ function hideStatsTooltip() {
 
 prevUnlockedCount = getUnlockedPlots().length;
 applyStage(getStageIndex(prevUnlockedCount));
-renderGardenLayer();
+renderCollectionGrid();
 
 // 種カウンター：タップでトグル（開いたまま名前編集可）
 let gardenTooltipOpen = false;
