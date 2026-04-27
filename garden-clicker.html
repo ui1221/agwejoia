@@ -168,7 +168,7 @@
   .tt-total { font-size: 1.05rem; font-weight: 900; color: var(--green); margin-top: 8px; text-align: left; }
 
   /* タップボタン */
-  .tap-area { display: flex; justify-content: center; align-items: flex-end; padding: 10px 0 18px; gap: 4px; }
+  .tap-area { position: relative; display: flex; justify-content: center; align-items: center; padding: 10px 0 18px; }
   .tap-btn {
     background: none; border: none; cursor: pointer;
     font-size: 5.5rem; line-height: 1;
@@ -422,15 +422,16 @@
     white-space: pre-wrap;
   }
 
-  /* キャラクター（家の両隣） */
+  /* キャラクター（家の両隣・絶対配置で家の位置に影響しない） */
   .dialogue-char {
-    display: flex;
-    align-items: flex-end;
+    position: absolute;
+    bottom: 18px;
     opacity: 0;
     transition: opacity 0.45s;
     pointer-events: none;
-    flex-shrink: 0;
   }
+  .dialogue-char.girl { left: 0; }
+  .dialogue-char.old  { right: 0; }
   .dialogue-char.active { opacity: 1; }
   .char-sprite {
     height: 11rem;
