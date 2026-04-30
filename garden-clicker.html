@@ -435,15 +435,21 @@
   .dialogue-overlay.speaker-old  .dialogue-overlay-text { text-align: right; }
 
   /* キャラクター（家の両隣・絶対配置で家の位置に影響しない） */
+  @keyframes charBreathe {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+  }
   .dialogue-char {
     position: absolute;
     bottom: 18px;
-    opacity: 0;
+    opacity: 0.85;
     transition: opacity 0.45s;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: pointer;
+    animation: charBreathe 4s ease-in-out infinite;
   }
-  .dialogue-char.girl { left: 0; }
-  .dialogue-char.old  { right: 0; }
+  .dialogue-char.girl { left: 0; animation-delay: -1.2s; }
+  .dialogue-char.old  { right: 0; animation-delay: -2.8s; }
   .dialogue-char.active { opacity: 1; }
   .char-sprite {
     height: 11rem;
@@ -495,7 +501,7 @@
 
   <!-- タップボタン＋キャラクター -->
   <div class="tap-area">
-    <div class="dialogue-char girl" id="dialogueGirl">
+    <div class="dialogue-char girl" id="dialogueGirl" onclick="showDialogue()">
       <img src="girl001.png?v=2" class="char-sprite" id="spriteGirl"
            draggable="false" oncontextmenu="return false">
     </div>
@@ -508,7 +514,7 @@
       🏠
     </button>
     <div class="tap-idle-hint" id="tapIdleHint">👆</div>
-    <div class="dialogue-char old" id="dialogueOld">
+    <div class="dialogue-char old" id="dialogueOld" onclick="showDialogue()">
       <img src="oldman001.png?v=2" class="char-sprite" id="spriteOld"
            draggable="false" oncontextmenu="return false">
     </div>
@@ -1697,15 +1703,12 @@ const DIALOGUE_GENERIC = [
 let dialogueActive = false;
 
 function showDialogue() {
-  if (dialogueActive || currentSheetType !== null) {
-    setTimeout(showDialogue, 20000);
-    return;
-  }
+  if (dialogueActive || currentSheetType !== null) return;
 
   const isLow    = getUnlockedPlots().length <= 3;
   const pool     = isLow ? DIALOGUE_LOW : DIALOGUE_GENERIC;
   const avail    = pool.filter(d => !d.condition || d.condition());
-  if (!avail.length) { setTimeout(showDialogue, 20000); return; }
+  if (!avail.length) return;
 
   const entry      = avail[Math.floor(Math.random() * avail.length)];
   const isExchange = !!entry.exchange;
@@ -1739,7 +1742,6 @@ function showDialogue() {
         spriteG.classList.remove('dim');
         spriteO.classList.remove('dim');
         dialogueActive = false;
-        setTimeout(showDialogue, (22 + Math.random() * 18) * 1000);
       }, 400);
       return;
     }
@@ -1767,8 +1769,6 @@ function showDialogue() {
 
   nextLine();
 }
-
-setTimeout(showDialogue, 4000);
 
 let lastTime = performance.now();
 let lastSeedDisplayTime = 0;
